@@ -1,0 +1,1124 @@
+╔══════════════════════════════════════════════════════════╗
+║           VARIABLE INITIALIZATION & PRE-CONDITION VERIFICATION              ║
+║                        CONSOLIDATED VERSION 6.0                             ║
+╚══════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 0 — DECLARE INPUT VARIABLES · OPERATIONAL SEMANTICS · AUDIT CONFIGURATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    [Document1] refers to the full text of the document submitted for evaluation.
+    [Jurisdiction] := inferred or defaulted to "Global".
+
+    [Ground_Truth_Entries] = Optional operator‑supplied authoritative facts.
+    [Frozen_Ground_Truth] = Immutable semantic validator for the current cycle.
+        DERIVATION (fixed at run start, before STEP 1):
+            IF [Ground_Truth_Entries] is supplied:
+                [Frozen_Ground_Truth] := an immutable snapshot of
+                [Ground_Truth_Entries] as provided at run start. Later
+                changes to [Ground_Truth_Entries] during the run do not
+                alter [Frozen_Ground_Truth].
+            IF [Ground_Truth_Entries] is not supplied:
+                [Frozen_Ground_Truth] := empty. All "consistent with
+                [Frozen_Ground_Truth]" checks pass vacuously; findings and
+                patches are then judged solely against [Canonical_Baseline]
+                and internal document consistency.
+    [Canonical_Baseline] = Exact source content of [Document1] at run start.
+    [Current_Patch] = Ordered list of accepted patch operations.
+
+    [Audit_Category_Hierarchy] :=
+        1. STRUCTURAL
+        2. LOGICAL_TECHNICAL
+        3. REDUNDANCY_TONE
+
+    [Contextual_Importance] :=
+        FOUNDATIONAL > CORE > SUPPORTING > SUPPLEMENTARY
+
+    [Dependency_Footprint] :=
+        BROAD > MODERATE > LOCAL
+
+    [Differential_Finding_Classes] :=
+        FIRST_RUN                    (no prior lineage audit exists; treat as
+                                       baseline; does not trigger reversion)
+        DUPLICATE_REDISCOVERY        (same as existing; suppress)
+        UNSUPPORTED_DIFFERENTIAL_FINDING (not verifiable; suppress)
+        GROUND_TRUTH_CONFLICT        (retained, not auto-resolved; does not
+                                       trigger reversion; not permanently
+                                       exempt from closure — see
+                                       Adjudication Escalation, Task 2)
+        LATE_DETECTED_BASELINE_FINDING (retained, not auto-resolved; does
+                                       not trigger reversion; not permanently
+                                       exempt from closure — see
+                                       Adjudication Escalation, Task 2)
+        PATCH_INDUCED                (trigger reversion if severity > [Regression_Threshold_])
+        NEWLY_EXPOSED_DEPENDENCY     (trigger reversion if severity > [Regression_Threshold_])
+        AUDIT_INSTABILITY            (a finding whose presence or score
+                                       changed between two runs against
+                                       byte-identical text with no
+                                       intervening patch; flags the audit
+                                       process itself, not the document;
+                                       see [Severity_Determinism_Clause])
+        ACCEPTED_DEVIATION           (a GROUND_TRUTH_CONFLICT or
+                                       LATE_DETECTED_BASELINE_FINDING
+                                       formally closed by human
+                                       adjudication; excluded from
+                                       above-threshold accounting — see
+                                       Adjudication Escalation, Task 2)
+
+    [Severity_Rubric] :=
+        8–10: Band = Critical — structural or logical flaw affecting correctness
+        5–7:  Band = Moderate — technical or tonal issue affecting clarity
+        1–4:  Band = Minor    — style or redundancy issue without impact
+        The "Band" column in [Report_Table] is populated from this mapping.
+
+    [Severity_Determinism_Clause] :=
+        Each finding's score shall be derived from an explicit sub-criteria
+        checklist per Category, not holistic judgment. Maintain a fixed,
+        enumerated list of objective yes/no sub-criteria per Category
+        (e.g., under STRUCTURAL: "undefined reference/dependency" = +3,
+        "hierarchy violation" = +2, "circular dependency" = +2, ...;
+        analogous lists maintained for LOGICAL_TECHNICAL and
+        REDUNDANCY_TONE). The reported score is the sum of matched
+        sub-criteria, capped at 10.
+
+        Every finding in [Report_Table] shall list which sub-criteria it
+        matched, alongside its score, so the score is independently
+        checkable against the source text.
+
+        NOVEL_ISSUE_NOT_IN_CHECKLIST: if a genuine issue is identified that
+        matches no existing sub-criterion, it shall not be scored ad hoc.
+        Instead, propose the new sub-criterion explicitly (Category, name,
+        point value, one-line trigger condition) in the output, score the
+        finding provisionally under that proposed criterion, and mark it
+        NOVEL_ISSUE_NOT_IN_CHECKLIST so a human can ratify or reject the
+        checklist addition before the next run. This keeps checklist
+        growth visible and auditable rather than a source of silent drift.
+
+        Re-running the audit against byte-identical [Canonical_Baseline]
+        text with an identical [Audit_Ledger] state shall reproduce
+        identical findings and identical scores. A finding that appears,
+        disappears, or changes score between two such runs without any
+        intervening patch is itself a Critical STRUCTURAL finding against
+        the audit process, classified AUDIT_INSTABILITY rather than folded
+        into the document's own findings.
+
+        SCOPE NOTE: this clause establishes determinism-in-principle — a
+        well-specified procedure that, executed by a deterministic
+        process, reproduces exactly. Against a stochastic executor (e.g.,
+        an LLM sampling at temperature > 0), it cannot guarantee
+        determinism-in-execution; its practical effect in that case is to
+        convert unaddressed scoring drift into a monitored, logged
+        condition (AUDIT_INSTABILITY) rather than an invisible
+        discrepancy.
+
+    [Base_Threshold_] := 5
+    [Threshold_] := [Base_Threshold_] + 1  (i.e., 6 initially)
+    [Regression_Threshold_] := 4
+
+    [Patch_Retry_Limit] := 3
+    [Patch_Ceiling] := 50 words (max net addition per patch)
+    [Phase3_Word_Budget] := 0 net words, applied across the whole Phase 3
+        pass rather than per patch — see Phase 3, Task 2.
+    [Defer_Limit] := 2 (see Adjudication Escalation, Task 2)
+    [Escalation_Trigger_Runs] := 3 (consecutive runs of persistence, or of
+        retry-exhaustion, before adjudication is offered — applies both to
+        GROUND_TRUTH_CONFLICT / LATE_DETECTED_BASELINE_FINDING and to any
+        ordinary finding that exhausts [Patch_Retry_Limit] on
+        [Escalation_Trigger_Runs] consecutive runs — see Adjudication
+        Escalation, Task 2)
+
+    [Audit_Ledger] := Persistent manifest from prior run:
+        - prior findings with dispositions (Solved / Unresolved / Deferred /
+          ACCEPTED_DEVIATION)
+        - source‑hash of [Canonical_Baseline] and all dependency spans
+        - accepted patch span hashes
+        - [Persistence_Count] per finding ID for any finding eligible for
+          Adjudication Escalation (GROUND_TRUTH_CONFLICT,
+          LATE_DETECTED_BASELINE_FINDING, or an ordinary finding that has
+          exhausted [Patch_Retry_Limit]), tracked using the "substantively
+          present" identity test defined in Phase 1's Audit (Verification)
+          step (same Category, Axis, and Location, identical or within
+          3 lines of source) — see Adjudication
+          Escalation, Task 2
+    If no prior run exists, [Audit_Ledger] = empty.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 1 — VALIDATE [Canonical_Baseline] and [Jurisdiction]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    Confirm that [Canonical_Baseline] satisfies ALL of the following conditions
+    before proceeding:
+
+        CHECK-1 (Non-null):
+            [Canonical_Baseline] must not be null, undefined, or an empty reference.
+
+        CHECK-2 (Non-empty):
+            [Canonical_Baseline] must contain at least one parseable unit of text
+            (word, sentence, or structured element).
+
+        CHECK-3 (Parseable — Operational Definition):
+            [Canonical_Baseline] must be provided as UTF-8 plain text, structured
+            markdown, LaTeX source, or successfully extracted text from a
+            parseable format (e.g., PDF, HTML). This is an operational check.
+            Do not interpret "parseable" subjectively. Binary data, corrupted
+            files, or text that is indistinguishable from random data FAIL
+            this check.
+
+        CHECK-4 (Sufficient Length — Machine-Countable):
+            [Canonical_Baseline] must contain at least 300 alphanumeric characters
+            (letters and digits, specifically the set [A-Za-z0-9]) after stripping
+            all whitespace, punctuation, markdown symbols, and formatting tags.
+            This ensures a machine-countable threshold. Documents with fewer than
+            300 such characters FAIL this check.
+
+        CHECK-5 (Jurisdiction Non-Empty):
+            [Jurisdiction] must be a non-empty string that is either explicitly
+            provided, clearly inferable from [Canonical_Baseline], or explicitly
+            defaulted to "Global" (with the default justification recorded in
+            the output). A blank, null, or purely numeric Jurisdiction FAILS this check.
+
+    ────────────────────────────────────────────────────────
+    STEP 1 FAILURE HANDLING:
+    ────────────────────────────────────────────────────────
+        IF any CHECK fails:
+            HALT immediately with message:
+                "HALT: [Canonical_Baseline] or [Jurisdiction] failed validation.
+                 Failed check(s): [list failed CHECK IDs].
+                 Provide a valid, non-empty, parseable document with sufficient
+                 technical content, and a valid jurisdiction, before retrying."
+            DO NOT proceed to any subsequent step.
+    ────────────────────────────────────────────────────────
+
+    ON SUCCESS:
+        All five checks pass.
+        Set FLAG_S1 = OK
+        PROCEED to STEP 2
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 2 — ASSIGN [Speciality_Field]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    Extract the primary technical domain of [Canonical_Baseline] using the following
+    criteria, applied in strict priority order (highest priority first).
+    The first criterion that yields a unique, non-trivial result is used.
+    Do NOT continue evaluating lower-priority criteria once a result is found.
+
+    CRITERION (i) — EXPLICIT DECLARATION (with pre-filter):
+        If [Canonical_Baseline] contains an explicit self-description of its domain
+        (e.g., "This paper addresses X", "This system operates in the field
+        of X"), extract X as [Speciality_Field].
+        However, if that explicit declaration contains any of the banned
+        generic terms ("technology", "science", "engineering", "computing",
+        "research", "information technology", "data science"), skip this
+        criterion and proceed to CRITERION (ii) immediately.
+
+    CRITERION (ii)  — CORE METHODOLOGY
+        If no explicit declaration exists, identify the domain most directly
+        tied to the document's core methodology, primary algorithm, or central
+        technical process.
+
+    CRITERION (iii) — DOMINANT TERMINOLOGY CLUSTER
+        If criteria (i) and (ii) both fail to yield a unique result, identify
+        the domain represented by the most densely recurring technical
+        terminology cluster across the document body.
+
+    CRITERION (iv)  — STRUCTURAL INFERENCE
+        If all prior criteria fail, infer the domain from the document's
+        structural conventions (e.g., citation style, section naming, formal
+        notation type).
+
+    NON-TRIVIAL CONSTRAINT (applied to all criteria):
+        [Speciality_Field] MUST NOT be any of the following generic terms:
+        "technology", "science", "engineering", "computing", "research",
+        "information technology", "data science" (when used without qualifier).
+        It MUST reference a named sub-discipline, methodology, or application
+        domain — for example, "procedural game generation" rather than
+        "game development". This is a stronger, more objective specificity
+        test than the previous "distinguishable from 3 fields" requirement.
+
+    LENGTH CONSTRAINT:
+        [Speciality_Field] MUST be between 2 and 6 words.
+
+    ─────────────────────────────────────────────────────────
+    STEP 2 INTERNAL FLAG RULE (No Independent Halt):
+    ─────────────────────────────────────────────────────────
+        Step 2 does NOT halt on specificity failure.
+        If no criterion yields a non-trivial result using standard
+        evaluation, assign [Speciality_Field] = "[UNRESOLVED]" and flag:
+            FLAG_S2 = SPECIFICITY_UNRESOLVED
+
+        This flag is consumed and resolved exclusively in STEP 5.
+        Step 2 NEVER independently halts on specificity grounds.
+    ──────────────────────────────────────────────────────────
+
+    ON SUCCESS (non-trivial result found):
+        Set [Speciality_Field] = <extracted value>
+        Set FLAG_S2 = OK
+        PROCEED to STEP 3
+
+    ON UNRESOLVED (no non-trivial result found):
+        Set [Speciality_Field] = "[UNRESOLVED]"
+        Set FLAG_S2 = SPECIFICITY_UNRESOLVED
+        PROCEED to STEP 3
+        (STEP 3 does not depend on [Speciality_Field] and always runs.
+         Whether STEP 4 runs afterward depends on FLAG_S2 — see STEP 3.)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 3 — ASSIGN [Purpose]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    Assign the standardized purpose value directly.
+    This value is fixed and requires no inference from [Canonical_Baseline].
+
+        [Purpose] = 'developing AI-based systems and applications'
+
+    ───────────────────────────────────────────────────────────
+    STEP 3 FAILURE HANDLING:
+    ───────────────────────────────────────────────────────────
+        IF [Purpose] cannot be assigned (e.g., system variable conflict,
+        encoding error, or override attempt):
+            HALT with message:
+                "HALT: [Purpose] could not be assigned.
+                 This is a fixed system value and must not be overridden.
+                 Investigate variable assignment environment and retry."
+            DO NOT proceed to any subsequent step.
+    ────────────────────────────────────────────────────────────
+
+    ON SUCCESS:
+        Set FLAG_S3 = OK
+        IF FLAG_S2 = OK:
+            PROCEED to STEP 4
+        IF FLAG_S2 = SPECIFICITY_UNRESOLVED:
+            SKIP STEP 4 (it requires a resolved [Speciality_Field]; running it
+            against the "[UNRESOLVED]" placeholder would waste a rewrite pass
+            on text that STEP 5 will discard).
+            Set FLAG_S4 = NOT_SET
+            PROCEED directly to STEP 5
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 4 — CONSTRUCT AND REWRITE [My_Goal]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    (Entered only when FLAG_S2 = OK — see STEP 3. Also re-entered from
+     STEP 5 PATH A2 on a successful retry.)
+
+    PHASE A — CONSTRUCT RAW SENTENCE
+        Instantiate the following template:
+
+            "As an AI developer specializing in [Speciality_Field],
+             my goal is [Purpose]."
+
+        Substitute the confirmed values of [Speciality_Field] and [Purpose].
+        Label the result: RAW_SENTENCE
+
+    PHASE B — APPLY REWRITE RULES
+        Apply the following rules to RAW_SENTENCE in the order listed.
+        Rules are applied sequentially; each rule operates on the output
+        of the previous rule.
+
+        RULE (i)   — GRAMMAR CORRECTION (PRIORITY OVER PRESERVATION)
+            Correct all grammatical errors including article agreement,
+            subject-verb agreement, and punctuation.
+            NOTE: Grammar correction takes precedence over strict wording
+            preservation when the two conflict. The goal is a grammatically
+            correct sentence that retains the original semantic meaning.
+
+        RULE (ii)  — SEMANTIC PRESERVATION
+            Do not alter the core meaning of the sentence.
+            Permitted: grammatical restructuring, article changes.
+            Prohibited: synonym substitution, clause reordering,
+            addition of new concepts, removal of existing core-meaning
+            concepts.
+            EXCEPTION: removal of non-essential qualifiers strictly to
+            satisfy RULE (iv)'s length cap is governed by RULE (iv), not
+            by this rule — see RULE (iv) for the boundary between a
+            removable qualifier and a protected core-meaning component.
+
+        RULE (iii) — PROFESSIONAL TONE
+            Ensure the sentence reads at a professional register.
+            Remove colloquialisms, contractions, or informal phrasing
+            if present.
+
+        RULE (iv)  — LENGTH CAP (PRIORITY OVER PRESERVATION FOR QUALIFIERS ONLY)
+            The final sentence MUST NOT exceed 40 words.
+            If grammar correction or professional tone adjustments cause
+            the sentence to exceed 40 words, apply minimal truncation to
+            non-essential qualifiers while preserving core meaning.
+            RULE (iv) takes precedence over RULE (ii) solely for the
+            removal of non-essential qualifiers needed to meet the cap.
+            Core meaning components remain protected under RULE (ii) at
+            all times; if the cap cannot be met without removing a core
+            meaning component, this is not permitted — invoke the STEP 4
+            FAILURE BRANCH instead.
+
+    ──────────────────────────────────────────────────────────
+    STEP 4 FAILURE BRANCH:
+    ──────────────────────────────────────────────────────────
+        If after applying all four rules the resulting sentence:
+          (a) still contains grammatical errors that cannot be resolved
+              without violating semantic preservation, OR
+          (b) cannot be reduced to ≤40 words without removing core
+              meaning components,
+        THEN:
+            Set [My_Goal] = "[CONSTRUCTION_FAILED]"
+            Set FLAG_S4 = CONSTRUCTION_FAILED
+            HALT with message:
+                "HALT: [My_Goal] could not be constructed
+                 within the defined rewrite constraints. Review
+                 [Speciality_Field] value for excessive length or
+                 incompatible phrasing, then restart from STEP 2."
+    ──────────────────────────────────────────────────────────
+
+    ON SUCCESS:
+        Set [My_Goal] = <rewritten sentence>
+        Set FLAG_S4 = OK
+        PROCEED to STEP 5
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 5 — VERIFICATION GATE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    PRE-CHECK — VALIDATE INCOMING FLAGS
+    ───────────────────────────────────────────────────────────
+        Confirm all flags are in a valid state before proceeding:
+
+        IF FLAG_S2 = SPECIFICITY_UNRESOLVED (FLAG_S4 = NOT_SET, STEP 4 skipped)
+            → Execute CONDITION (a) PATH A2 (RETRY path)
+
+        IF FLAG_S4 = CONSTRUCTION_FAILED
+            → This state must not reach Step 5 (STEP 4 already halts on this
+              condition). If encountered, treat as an illegal state:
+              HALT immediately with message:
+                  "Illegal state: FLAG_S4 = CONSTRUCTION_FAILED
+                   reached Step 5. Restart from STEP 4."
+
+        IF FLAG_S2 = OK AND FLAG_S3 = OK AND FLAG_S4 = OK
+            → Proceed to CONDITION (a) PATH A1 (VERIFY path)
+
+    ───────────────────────────────────────────────────────────
+    CONDITION (a) — [Speciality_Field] SPECIFICITY CHECK
+    ───────────────────────────────────────────────────────────
+
+        PATH A1 — VERIFY (FLAG_S2 = OK):
+            Confirm [Speciality_Field] satisfies the non-trivial constraint
+            defined in Step 2.
+            IF PASS → proceed to CONDITION (b)
+            IF FAIL → treat as FLAG_S2 = SPECIFICITY_UNRESOLVED,
+                       execute PATH A2
+
+        PATH A2 — RETRY (FLAG_S2 = SPECIFICITY_UNRESOLVED):
+        ─────────────────────────────────────────────────────
+            Apply the following operationally defined stricter constraints:
+
+            STRICTER CONSTRAINT SET:
+              SC-1: Exclude the current [Speciality_Field] candidate
+                    explicitly. It must not be reused or trivially rephrased.
+              SC-2: Require the new value to reference a named sub-discipline,
+                    methodology, or application domain
+                    (e.g., "convolutional neural network design" rather than
+                    "neural networks").
+              SC-3: [Removed] — The previous distinguishability test is
+                    removed as it is not deterministically verifiable.
+                    Specificity is now solely governed by SC-2 and the
+                    NON-TRIVIAL CONSTRAINT in Step 2.
+              SC-4: Re-evaluate using Step 2 criteria in strict priority
+                    order, starting from CRITERION (i), skipping any
+                    criterion that previously yielded the rejected value.
+
+            RETRY AUTHORITY BOUNDARY:
+                Step 5 is the SOLE authority for retry decisions.
+                Step 2, when re-executed under retry, operates in
+                "RETRY MODE" — it NEVER independently halts;
+                it returns a result (or [UNRESOLVED]) to Step 5 only.
+
+            IF RETRY YIELDS VALID [Speciality_Field]:
+                ► Update [Speciality_Field] = <new value>
+                ► MANDATORY: Execute STEP 4 in full using the updated
+                  [Speciality_Field]. (This is STEP 4's first execution if
+                  it was skipped per STEP 3; a rebuild if STEP 4 had
+                  already run once under a since-invalidated value.)
+                ► Update FLAG_S4 accordingly.
+                ► IF FLAG_S4 = OK       → proceed to CONDITION (b)
+                ► IF FLAG_S4 = CONSTRUCTION_FAILED → HALT with
+                  Step 4 failure message.
+
+            IF RETRY STILL YIELDS [UNRESOLVED] or a value
+            that still fails the non-trivial constraint:
+                HALT with message:
+                    "HALT — Condition (a): [Speciality_Field]
+                     could not be resolved to a specific, non-trivial
+                     value after one retry with stricter constraints.
+                     The document may be too general or cross-disciplinary
+                     for a single field assignment.
+                     Manual review required."
+
+    ───────────────────────────────────────────────────────────
+    CONDITION (b) — [Purpose] COMPATIBILITY CHECK
+    ───────────────────────────────────────────────────────────
+
+        Verify that [Purpose] = 'developing AI-based systems and
+        applications' is semantically compatible with [Speciality_Field]
+        using ALL THREE of the following compatibility criteria.
+        All judgments must be anchored to [Frozen_Ground_Truth] and
+        [Canonical_Baseline]. Do not infer compatibility from external
+        knowledge that is not present in these sources.
+
+            COMPAT-1 (Applicability):
+                The speciality field must be one in which AI-based systems
+                can be meaningfully developed or applied — not purely
+                theoretical, historical, or non-computational.
+
+            COMPAT-2 (Non-Contradiction):
+                The speciality field must not explicitly exclude, prohibit,
+                or be defined in opposition to AI-based development
+                (e.g., "pre-digital analog circuit design" would fail this).
+
+            COMPAT-3 (Relevance):
+                There must exist at least one established, recognized use
+                case of AI application within the speciality field.
+                Recognition must be traceable to a documented source in
+                [Canonical_Baseline] (e.g., cited peer-reviewed publication,
+                industry standard, or referenced deployment). Do not invent
+                use cases not supported by the baseline.
+
+        IF ALL THREE PASS:
+            VERIFICATION SUCCESSFUL
+            OUTPUT:
+                "Initialization complete.
+                 [Speciality_Field] = <value>
+                 [Purpose]          = 'developing AI-based systems
+                                       and applications'
+                 [My_Goal]          = <value>
+                 [Jurisdiction]     = <value or 'Global (default)'>
+                 [Current_Patch]    = [list of applied patches, or empty]
+                 All variables verified. Ready to proceed."
+            SET system state = INITIALIZED
+            ► PROCEED to next operational step. [END OF INITIALIZATION]
+
+        IF ANY CRITERION FAILS:
+            HALT with message:
+                "HALT — Condition (b): [Purpose] = 'developing
+                 AI-based systems and applications' is not compatible with
+                 [Speciality_Field] = <value>. Compatibility criterion
+                 [COMPAT-X] failed. Verify that the document's domain
+                 supports AI-based development before retrying."
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EXECUTION FLOW SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    ┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐
+    │ STEP 1  │────►│ STEP 2  │────►│ STEP 3  │────►│ STEP 4  │
+    │Validate │     │ Assign  │     │ Assign  │     │Construct│
+    │Canonical│     │Specialty│     │ Purpose │     │ My_Goal │
+    │Baseline │     │         │     │         │     │(skipped │
+    └────┬────┘     └────┬────┘     └────┬────┘     │if S2    │
+         │ FAIL          │ UNRESOLVED    │           │unresolv-│
+         ▼               │ (still runs   │           │ed)      │
+       HALT               │  Step 3)      │           └────┬────┘
+                          ▼               ▼ (S2=OK)         │ FAIL
+                    (flag carried    ┌─────────┐            ▼
+                     forward)        │ STEP 3  │          HALT
+                                     │ always  │
+                                     │ runs)   │
+                                     └────┬────┘
+                            S2=UNRESOLVED │  S2=OK
+                            (skip Step 4) │  (run Step 4)
+                                          ▼
+                                     ┌─────────┐
+                                     │ STEP 5  │
+                                     │ Verify  │
+                                     │  Gate   │
+                                     └────┬────┘
+                               ┌──────────┴──────────┐
+                               │                      │
+                          COND (a)               COND (b)
+                         Specificity             Compatibility
+                          Check                    Check
+                               │                      │
+                          PASS/RETRY              PASS/HALT
+                               │                      │
+                          (retry →                INITIALIZED
+                         run/rebuild S4)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FLAG REGISTER REFERENCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    FLAG     │ SET IN  │ POSSIBLE VALUES                        │ CONSUMED IN
+    ─────────┼─────────┼─────────────────────────────────────────┼────────────
+    FLAG_S1  │ Step 1  │ OK                                      │ Step 2 entry
+    FLAG_S2  │ Step 2  │ OK | SPECIFICITY_UNRESOLVED             │ Step 3, Step 5 Cond(a)
+    FLAG_S3  │ Step 3  │ OK                                      │ Step 5 pre-check
+    FLAG_S4  │ Step 4  │ OK | CONSTRUCTION_FAILED | NOT_SET       │ Step 5 pre-check
+             │         │ (NOT_SET = Step 4 skipped per Step 3,   │
+             │         │  Step 2 was unresolved)                 │
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+END OF INITIALIZATION PROMPT — VERSION 6.0
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+════════════════════════════════════════════════════════════
+TASK 1 — CONCEPTUAL DESCRIPTION
+════════════════════════════════════════════════════════════
+
+Overview:  Conceptual evaluation of the document.
+Procedure: Extract and rewrite a technical abstract from
+[Canonical_Baseline].
+
+Rules:
+- Write 180–270 words.
+- Use present tense throughout.
+- Avoid citations, equations, labels, and undefined
+abbreviations.
+- Follow this structure exactly:
+
+[Background/Problem] (1–2 sentences)
+This paper addresses [gap] by [objective].
+We [method/approach] using [key technique/system/
+experiment].
+Results show [top results with metrics], indicating
+[main insight].
+These findings [implication/impact] for [target field/
+application].
+
+Output: Provide only the abstract.
+Assign the response to [doc_description] (this is the abstract you
+have just produced; the variable refers to the output of this task).
+
+Based on [doc_description] (the abstract) and the determined
+[Jurisdiction], determine an appropriate regulatory framework for
+developing [My_Goal], covering four to six items, and assign it to
+[regulatory_framework]. If [Jurisdiction] is unspecified or ambiguous,
+explicitly state the assumed jurisdiction (e.g., "Assumed jurisdiction:
+European Union") in the output and justify why it applies.
+List the aspects covered by [regulatory_framework].
+All judgments in this task must be grounded in [Frozen_Ground_Truth]
+and [Canonical_Baseline]. Do not invent facts or regulatory
+requirements that are not traceable to these sources.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 2 — STRUCTURAL & TECHNICAL AUDIT WITH CORRECTIVE LOOP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+─────────────────────────────────────────────────────────────── 
+Procedure 1: Initial Audit Pass
+─────────────────────────────────────────────────────────────── 
+
+    Authoritative run-local initialization: [Threshold_] := [Base_Threshold_] + 1.
+
+    Audit [Document1] for coherence and consistency using the following
+    three evaluation axes. For every unique issue you find, assign:
+        - severity score (01–10) per [Severity_Rubric]
+        - exactly one Category from [Audit_Category_Hierarchy]
+        - one [Contextual_Importance] level
+        - one [Dependency_Footprint] level
+
+    On the second and subsequent lineage runs, compare apparent new or
+    rediscovered findings against [Audit_Ledger], the current source/dependency
+    hashes, the preceding accepted‑patch spans, and [Frozen_Ground_Truth],
+    and classify them according to [Differential_Finding_Classes].
+
+    Do not suppress a finding merely because its own source span is unchanged.
+    Retain GROUND_TRUTH_CONFLICT, NEWLY_EXPOSED_DEPENDENCY, or independently
+    verifiable LATE_DETECTED_BASELINE_FINDING. Suppress only
+    DUPLICATE_REDISCOVERY and UNSUPPORTED_DIFFERENTIAL_FINDING.
+
+    Show the text "pass 1, threshold = " followed by [Threshold_].
+
+    NOTE ON THE TWO-PASS DESIGN: Pass 1's threshold (6) is a preliminary,
+    informational value — it is displayed for traceability but does not
+    filter or finalize any output on its own. All findings discovered in
+    Pass 1 remain live candidates and are carried into Pass 2. Only Pass
+    2's threshold (7), reassigned below, determines what is filtered into
+    [Report_Table]. This is intentional: Pass 1 exists to establish full
+    candidate recall before Pass 2 applies the stricter, authoritative cut.
+
+    ─── Axis 1: [Structural_Consistency] ───
+        Evaluate: workflow order, section hierarchy, linear execution, and
+        hidden dependencies. Where [Document1] is a computational notebook
+        or pipeline artifact, also evaluate cell dependency chain integrity.
+        Where it is not (e.g., a prose or LaTeX document with no executable
+        cells), omit cell-dependency-specific checks and evaluate structural
+        consistency through section/heading hierarchy and cross-reference
+        integrity instead.
+
+    ─── Axis 2: [Logical_&_Technical_Rigor] ───
+        Evaluate: internal logical consistency, claim-to-evidence traceability,
+        and definitional consistency of terms across the document. Where
+        [Document1] is a computational notebook or ML pipeline artifact, also
+        evaluate data partitioning, pipeline leakage, missing‑data handling,
+        ingestion contracts, cross‑validation integrity, metric appropriateness,
+        hyperparameter boundaries, and baseline comparison. Where it is not,
+        omit those ML-specific checks and evaluate technical rigor through
+        the correctness and internal consistency of whatever formal content
+        (equations, architecture diagrams, algorithms, protocols) the document
+        actually contains.
+
+    ─── Axis 3: [Redundancy_Tone_&_Unsubstantiated_Claims] ───
+        Evaluate: repetition (≥3 occurrences of substantively the same point),
+        naming/labeling quality, tone consistency, and unsubstantiated claims.
+        Where [Document1] contains code, also evaluate dead code, unused
+        imports, output hygiene, artifact lifecycle compliance, inference/
+        training separability, resource documentation, environment
+        completeness, and data privacy concerns.
+
+    Reassign [Threshold_] := [Base_Threshold_] + 2  (i.e., 7)
+
+─────────────────────────────────────────────────────────────── 
+Procedure 2: Second Audit Pass
+─────────────────────────────────────────────────────────────── 
+
+    Show the text "pass 2, threshold = " followed by [Threshold_].
+    Repeat Procedure 1 with the updated threshold.
+
+─────────────────────────────────────────────────────────────── 
+Output Format for Procedure 1 & 2:
+─────────────────────────────────────────────────────────────── 
+
+    Provide a single structured report containing only retained findings
+    with a severity strictly greater than [Threshold_] (i.e., the Pass 2
+    value, 7 — see the note under Procedure 1).
+
+    Suppress:
+        - all lower‑scored items
+        - any finding classified as DUPLICATE_REDISCOVERY
+        - any finding classified as UNSUPPORTED_DIFFERENTIAL_FINDING
+
+    Format: A single plain‑text markdown table with columns:
+        ID | Category | Axis | Location | Score | Band | Contextual_Importance
+        | Dependency_Footprint | Differential_Class | Finding
+
+    Use FIRST_RUN for Differential_Class when no prior lineage audit exists.
+    Assign the table of findings to [Report_Table].
+
+─────────────────────────────────────────────────────────────── 
+Selection and Tie‑Break Rule:
+─────────────────────────────────────────────────────────────── 
+
+    Process findings category by category in the fixed order of
+    [Audit_Category_Hierarchy]. Select from the earliest category that
+    still contains an eligible unresolved finding above [Threshold_].
+
+    Within that category, order findings by:
+        1. decreasing severity score
+        2. decreasing [Contextual_Importance] (FOUNDATIONAL > CORE > SUPPORTING > SUPPLEMENTARY)
+        3. decreasing [Dependency_Footprint] (BROAD > MODERATE > LOCAL)
+        4. ascending ID (earliest physical document order)
+
+    A numerically higher‑severity finding in a later category shall NOT
+    bypass an eligible finding in an earlier category.
+
+    EXCLUSION: findings classified GROUND_TRUTH_CONFLICT or
+    LATE_DETECTED_BASELINE_FINDING are never selected under this rule for
+    automated patching, regardless of severity — a factual disagreement
+    with asserted ground truth or an independently verified baseline
+    finding is not something a text patch can correctly resolve. Such
+    findings are excluded from Selection on every run; see Adjudication
+    Escalation (after Phase 1) for how they are eventually closed.
+
+    AUDIT_INSTABILITY findings are likewise never selected under this
+    rule. An AUDIT_INSTABILITY finding reports that the audit process
+    itself produced inconsistent results across runs — there is no
+    document text a patch could change to fix that. It is excluded from
+    Selection, excluded from the above‑threshold count that drives the
+    Phase‑1 termination statement and the Query Gate, and is resolved
+    exclusively by one of: (i) correcting the specific sub-criterion in
+    [Severity_Determinism_Clause] that produced the drift, or (ii) an
+    explicit EXECUTION_ENVIRONMENT_NOTED acknowledgment recorded in
+    [Audit_Ledger] when the drift is attributed to the executing model's
+    non-determinism rather than to the checklist itself. Either
+    resolution is recorded by a human or operator action outside Phase 1,
+    never by P1.1–P1.4.
+
+─────────────────────────────────────────────────────────────── 
+Phase 1 — Corrective Fixing Loop of Selected Issues
+─────────────────────────────────────────────────────────────── 
+
+    Objective: Iteratively address findings with severity > [Threshold_]
+    in [Report_Table], processing categories in [Audit_Category_Hierarchy]
+    order and applying the Selection and Tie‑Break Rule within each category.
+
+    Phase 1 terminates when every above‑threshold finding has either been
+    resolved or explicitly left unresolved after bounded corrective attempts.
+    An unresolved finding shall not cause deadlock.
+
+    NOTE ON STEP NUMBERING: The four steps below are local to Phase 1 of
+    Task 2 and are numbered P1.1–P1.4 specifically to avoid collision with
+    the unrelated STEP 1–STEP 5 sequence in the Initialization block above.
+    All references to "the next step" within this Phase use these P1.x
+    labels.
+
+    Procedure:
+
+    P1.1 Selection:
+       Identify and select the first eligible unresolved finding exceeding
+       [Threshold_] under the Selection and Tie‑Break Rule.
+       Initialize [Patch_Retry_Count] = 0 for that selected finding.
+       Record current findings > [Regression_Threshold_] across all axes as
+       [PrePatch_Findings].
+       Propose a targeted patch that specifically addresses the selected
+       finding, subject to [Patch_Ceiling].
+
+    P1.2 Application:
+       Check that the patch is:
+           – specific, actionable, minimally invasive
+           – within [Patch_Ceiling]
+           – consistent with [Frozen_Ground_Truth]
+
+       If the patch contradicts, redefines, or implicitly supersedes
+       [Frozen_Ground_Truth]:
+           – Reject the patch. Increment [Patch_Retry_Count].
+           – If [Patch_Retry_Count] < [Patch_Retry_Limit], reformulate and
+             repeat, UNLESS every reformulation attempted so far has been
+             rejected for this same reason (contradicting
+             [Frozen_Ground_Truth]) rather than for [Patch_Ceiling] or
+             other cause — in that case, do not burn the remaining
+             retries on a patch type that cannot succeed. Instead:
+             reclassify the finding as GROUND_TRUTH_CONFLICT immediately,
+             remove it from the retry queue, initialize its
+             [Persistence_Count] = 1 in [Audit_Ledger], and proceed to
+             P1.4. It becomes subject to the EXCLUSION rule and
+             Adjudication Escalation from this point forward, the same as
+             a finding originally classified GROUND_TRUTH_CONFLICT by the
+             audit itself.
+           – If retries remain and at least one prior rejection this
+             finding had a different cause, reformulate and repeat.
+           – Otherwise (retries exhausted for other reasons) leave
+             unresolved; record reason; remove from retry queue; proceed
+             to P1.4.
+
+       If the patch exceeds [Patch_Ceiling]:
+           – Reject. Increment [Patch_Retry_Count].
+           – If retries remain, propose a smaller alternative.
+           – If no compliant smaller patch exists, leave unresolved; record reason; proceed to P1.4.
+
+       If the patch satisfies both constraints:
+           – Produce candidate version mechanically as ApplyPatch([Canonical_Baseline],
+             [Current_Patch] followed by candidate patch).
+           – Do NOT independently regenerate the document.
+
+    P1.3 Audit (Verification):
+       Review the updated candidate version using all three axes.
+           – Primary verification: the originating Axis of the selected finding.
+           – Regression‑check axes: the two remaining axes.
+       Record findings > [Regression_Threshold_] across all axes as
+       [PostPatch_Findings].
+
+       For every finding in [PostPatch_Findings] not substantively present
+       in [PrePatch_Findings], classify according to [Differential_Finding_Classes].
+       A finding is "substantively present" if its Category, Axis, and
+       Location are identical or within 3 lines of source.
+
+       Define [Patch_Regression_Findings] as the subset classified
+       PATCH_INDUCED or NEWLY_EXPOSED_DEPENDENCY with severity > [Regression_Threshold_].
+       If [Patch_Regression_Findings] is non‑empty:
+           – Revert the candidate patch.
+           – Show "patch reverted".
+           – Increment [Patch_Retry_Count].
+           – If retries remain, propose a different patch and repeat.
+           – Otherwise leave unresolved; record reason; remove from retry queue; proceed to P1.4.
+
+       If the selected finding still exceeds [Threshold_] under its originating
+       axis and no regression > [Regression_Threshold_] was identified:
+           – Revert. Show "patch reverted". Increment [Patch_Retry_Count].
+           – If retries remain, propose a different patch and repeat.
+           – Otherwise leave unresolved; record reason; proceed to P1.4.
+
+       If the selected finding no longer exceeds [Threshold_] and no regression
+       > [Regression_Threshold_] appears:
+           – Append the candidate patch to [Current_Patch].
+           – Mark the selected finding as resolved.
+           – Update audit state from [PostPatch_Findings].
+           – Proceed to P1.4.
+
+    P1.4 Queue Transition:
+       Identify the next eligible unresolved finding using the Selection and
+       Tie‑Break Rule, skipping those already resolved or removed from the
+       queue after exhausted retries.
+       If such a finding exists:
+           – designate it as the new selected finding
+           – initialize [Patch_Retry_Count] = 0
+           – record current findings > [Regression_Threshold_] as [PrePatch_Findings]
+           – propose a targeted patch
+           – repeat from P1.2.
+       If no eligible finding remains, terminate Phase 1 and proceed to Phase 2.
+
+    PERSISTENCE TRACKING FOR RETRY‑EXHAUSTED FINDINGS:
+       Any finding left "unresolved" by P1.2 or P1.3 above (retries
+       exhausted) has its [Persistence_Count] incremented in
+       [Audit_Ledger] this run, using the same "substantively present"
+       identity test as GROUND_TRUTH_CONFLICT tracking. A finding that
+       resolves on a later run and does not reappear has its
+       [Persistence_Count] cleared. This applies to ordinary findings,
+       not only to GROUND_TRUTH_CONFLICT / LATE_DETECTED_BASELINE_FINDING
+       / AUDIT_INSTABILITY — an ordinary finding that exhausts
+       [Patch_Retry_Limit] on [Escalation_Trigger_Runs] consecutive runs
+       becomes eligible for Adjudication Escalation on the same terms,
+       below.
+
+    At Phase‑1 termination:
+       – If every above‑threshold finding was resolved, state:
+         "No unresolved findings above [Threshold_] remain."
+       – Otherwise list every above‑threshold finding left unresolved and
+         the reason automatic correction terminated for that finding.
+       – Separately list every finding excluded from Selection or left
+         retry‑exhausted this run (GROUND_TRUTH_CONFLICT,
+         LATE_DETECTED_BASELINE_FINDING, AUDIT_INSTABILITY, or an
+         ordinary finding tracked per PERSISTENCE TRACKING FOR
+         RETRY‑EXHAUSTED FINDINGS above), with each one's current
+         [Persistence_Count].
+
+─────────────────────────────────────────────────────────────── 
+Adjudication Escalation
+─────────────────────────────────────────────────────────────── 
+
+    Objective: give any finding that cannot be closed by automated
+    patching — GROUND_TRUTH_CONFLICT, LATE_DETECTED_BASELINE_FINDING, or
+    an ordinary finding that has exhausted [Patch_Retry_Limit] on
+    [Escalation_Trigger_Runs] consecutive runs — a bounded path to
+    closure instead of indefinite persistence. AUDIT_INSTABILITY is
+    handled separately (see the EXCLUSION rule under Selection and
+    Tie‑Break Rule) and is not eligible here, since its resolution is
+    never a document patch or a ground‑truth update.
+
+    [Persistence_Count] per finding ID is tracked in [Audit_Ledger] across
+    lineage runs, using the "substantively present" identity test from
+    Phase 1's Audit (Verification) step (same Category, Axis, and
+    Location, identical or within 3 lines of source). A finding that
+    drops below [Threshold_] on some run and later reappears under this
+    identity test continues its existing count rather than resetting;
+    only a finding that fails the identity test is a new instance and
+    starts a fresh count under FIRST_RUN.
+
+    This procedure runs after Phase 1 terminates and does not block,
+    pause, or halt Phase 1, Phase 2, Phase 3, or the processing of any
+    other finding — it only concerns findings already excluded from, or
+    left unresolved by, automated patching.
+
+    FOR EACH eligible finding (GROUND_TRUTH_CONFLICT,
+    LATE_DETECTED_BASELINE_FINDING, or an ordinary finding retry‑exhausted
+    this run):
+        IF [Persistence_Count] < [Escalation_Trigger_Runs]:
+            Increment [Persistence_Count]. No further action; it remains
+            excluded or unresolved and will be reconsidered on the next
+            run.
+        IF [Persistence_Count] >= [Escalation_Trigger_Runs]:
+            Include the finding in the Phase 1 termination output (see
+            above) together with an explicit adjudication prompt. The
+            options offered depend on whether [Defer_Limit] has already
+            been reached for this finding (track deferrals separately
+            from [Persistence_Count] in [Audit_Ledger]):
+
+            IF deferrals so far < [Defer_Limit]:
+                "ADJUDICATION REQUIRED: finding [ID] has persisted for
+                 [Persistence_Count] runs. Choose one:
+                 (a) UPDATE [Ground_Truth_Entries] or the patch strategy
+                     — for GROUND_TRUTH_CONFLICT / LATE_DETECTED_BASELINE_
+                     FINDING, the document is correct and supersedes the
+                     conflicting ground-truth entry; for an ordinary
+                     retry‑exhausted finding, supply a revised patch
+                     directive outside the automated retry constraints.
+                 (b) ACCEPT_DEVIATION — the issue is understood and
+                     tolerated; reclassify as ACCEPTED_DEVIATION, exclude
+                     from future above‑threshold accounting, and record
+                     the accepting authority and rationale in
+                     [Audit_Ledger].
+                 (c) DEFER — continue the count; requires an explicit,
+                     logged justification for this run. Available
+                     [Defer_Limit] minus deferrals‑so‑far more time(s)
+                     after this one."
+            IF deferrals so far >= [Defer_Limit]:
+                "ADJUDICATION REQUIRED (DEFER EXHAUSTED): finding [ID]
+                 has persisted for [Persistence_Count] runs and reached
+                 its deferral limit of [Defer_Limit]. Choose one:
+                 (a) UPDATE [Ground_Truth_Entries] or the patch strategy
+                     — as above.
+                 (b) ACCEPT_DEVIATION — as above.
+                 DEFER is no longer offered for this finding."
+
+            Do not auto‑select an option. This is a surfaced human
+            decision point, not a halt condition — all other findings and
+            phases proceed normally regardless of whether or when it is
+            answered.
+            Record whichever decision is eventually made, and its
+            rationale, as a permanent [Audit_Ledger] entry. A finding
+            resolved via (a) re‑enters normal audit processing on the
+            next run; a finding resolved via (b) is reclassified
+            ACCEPTED_DEVIATION and no longer counted toward
+            above‑threshold accounting; a finding resolved via (c)
+            continues accruing [Persistence_Count], increments its
+            deferral count, and re‑prompts each subsequent run until
+            [Defer_Limit] is reached.
+
+─────────────────────────────────────────────────────────────── 
+Query Gate (User Approval)
+─────────────────────────────────────────────────────────────── 
+
+    If any unresolved findings remain after Phase 1:
+        Show "Unresolved findings remain. Choose one:
+              (Y) Approve — proceed to Phase 2 with all Phase 1 patches
+                  (resolved and any explicitly‑approved‑as‑acceptable
+                  findings) retained.
+              (K) Keep resolved only — discard the unresolved findings'
+                  failed attempts (there is nothing to discard for these,
+                  since no patch was ever accepted for them) but keep
+                  every patch from findings Phase 1 did successfully
+                  resolve, then proceed to Phase 2 with that reduced
+                  [Current_Patch].
+              (N) Reject everything — discard all of Phase 1, resolved
+                  and unresolved alike."
+        IF APPROVE (Y):
+            PROCEED to Phase 2. All patches accepted during Phase 1
+            remain in [Current_Patch].
+        IF KEEP RESOLVED ONLY (K):
+            [Current_Patch] retains only the patches for findings Phase 1
+            marked resolved. PROCEED to Phase 2 with this reduced
+            [Current_Patch]. The findings left unresolved by Phase 1 are
+            NOT re‑attempted this run; they remain open for the next
+            lineage run and continue accruing [Persistence_Count] per the
+            PERSISTENCE TRACKING rule above.
+        IF REJECT EVERYTHING (N):
+            HALT.
+            [Current_Patch] is rolled back to its state immediately before
+            Phase 1 began — i.e., any patches applied for findings that
+            were successfully resolved during Phase 1 are discarded along
+            with the unresolved ones. Nothing from Phase 1 is retained.
+            Do not proceed to Phase 2 or produce a consolidated version.
+
+    If Phase 1 resolved all findings, auto‑proceed to Phase 2 without query.
+
+─────────────────────────────────────────────────────────────── 
+Phase 2 — Producing the Consolidated Version
+─────────────────────────────────────────────────────────────── 
+
+    Objective: Produce the consolidated version mechanically as
+    ApplyPatch([Canonical_Baseline], [Current_Patch]), using the ordered
+    Phase‑1 approved patches already stored in [Current_Patch].
+    Do not independently regenerate the document.
+
+    Then audit the consolidated version using:
+        – Axis 3: [Redundancy_Tone_&_Unsubstantiated_Claims]
+
+    Output: [Phase2_Findings] = every Axis 3 finding > [Threshold_]
+    found in the consolidated version, in the same table format as
+    [Report_Table].
+
+─────────────────────────────────────────────────────────────── 
+Phase 3 — Corrective Consolidation Loop
+─────────────────────────────────────────────────────────────── 
+
+    Objective: Resolve every finding in [Phase2_Findings] using patches
+    that draw against a single shared [Phase3_Word_Budget] for the whole
+    pass, rather than a strict per‑patch constraint — see
+    [Phase3_Word_Budget] in Step 0. A patch may add net new words (where
+    word = alphanumeric sequence; whitespace/markup not counted) if the
+    pass's cumulative net word count, across all Phase‑3 patches accepted
+    so far plus this candidate, does not exceed [Phase3_Word_Budget]
+    (0 by default — i.e., the pass as a whole must not grow the document,
+    even though an individual patch within it now may, provided an
+    earlier or later patch in the same pass offsets it). Every candidate
+    patch must also remain consistent with [Frozen_Ground_Truth].
+
+    Each accepted Phase‑3 patch shall be appended in order to [Current_Patch],
+    and its net word delta added to a running [Phase3_Cumulative_Delta] for
+    this pass (initialized to 0 at the start of Phase 3).
+    Each candidate consolidated state shall be generated mechanically from
+    [Canonical_Baseline] plus the ordered [Current_Patch] plus the candidate
+    patch.
+
+    Continue until:
+        – no [Phase2_Findings] item remains above [Threshold_], OR
+        – a finding cannot be resolved without pushing
+          [Phase3_Cumulative_Delta] over [Phase3_Word_Budget], and no
+          currently‑queued later finding is known to offset it with a
+          length‑reducing patch, in which case it is left as Unsolved and
+          reported as such.
+
+    Procedure:
+        Apply Phase 1 steps P1.1, P1.2, and P1.4 to [Phase2_Findings]
+        instead of [Report_Table], substituting the [Phase3_Word_Budget]
+        / [Phase3_Cumulative_Delta] check for the [Patch_Ceiling] check
+        everywhere it appears in those steps.
+        Replace P1.3 with the following:
+
+        P1.3 Audit (Phase 3 Verification):
+           Review the updated consolidated version after each Phase‑3 patch.
+               – Primary verification: Axis 3 — [Redundancy_Tone_&_Unsubstantiated_Claims].
+               – Regression‑check axes: Axis 1 and Axis 2.
+           Record findings > [Regression_Threshold_] across all axes.
+
+           The selected finding is considered successfully resolved only if
+           its Axis 3 condition no longer exceeds [Threshold_].
+
+           Classify every apparently new Axis 1, Axis 2, or Axis 3 finding
+           according to [Differential_Finding_Classes].
+           Any PATCH_INDUCED or NEWLY_EXPOSED_DEPENDENCY finding with
+           severity > [Regression_Threshold_] triggers the reversion rule
+           (revert, increment [Patch_Retry_Count], retry or leave unresolved
+           and proceed to P1.4, per P1.3's reversion handling above).
+           Retain GROUND_TRUTH_CONFLICT and LATE_DETECTED_BASELINE_FINDING
+           items without attributing them to the Phase‑3 patch unless
+           causality is established.
+
+─────────────────────────────────────────────────────────────── 
+Final Output Requirements:
+─────────────────────────────────────────────────────────────── 
+
+    1. Phase 1 Output:
+       A concise log of each iteration, listing:
+           – finding addressed
+           – patch applied
+           – audit result
+       At conclusion, state either:
+           – "No unresolved findings above [Threshold_] remain."
+           – or list each above‑threshold finding left unresolved and why.
+
+    2. Phase 2 Output:
+       [Phase2_Findings], or a statement that none were found.
+
+    3. Phase 3 Output:
+       A concise iteration log in the same format as Phase 1.
+       At conclusion, state whether [Phase2_Findings] was fully resolved or
+       list remaining Unsolved items and why.
+
+    4. Consolidated Version:
+       Provide the consolidated version of [Document1] in its original source
+       format (LaTeX-ready when [Document1] is LaTeX source; otherwise in
+       [Document1]'s own original format), produced only as:
+           ApplyPatch([Canonical_Baseline], [Current_Patch])
+       using all approved fixing patches from Phase 1 and Phase 3.
+       Do NOT independently regenerate unchanged text.
+
+    5. Updated Audit Ledger:
+       Provide [Report_Table], labeling each finding:
+           – Solved
+           – Rejected‑as‑acceptable
+           – Deferred (per [Audit_Ledger] scope‑skip)
+           – Excluded pending adjudication (GROUND_TRUTH_CONFLICT /
+             LATE_DETECTED_BASELINE_FINDING / retry‑exhausted ordinary
+             finding, with current [Persistence_Count] and deferral count
+             against [Defer_Limit])
+           – ACCEPTED_DEVIATION (closed by human adjudication)
+           – Kept‑resolved‑only / Rejected‑entirely (per Query Gate
+             disposition, when applicable this run)
+       Any finding classified AUDIT_INSTABILITY this run — see
+       [Severity_Determinism_Clause] — shall be listed separately from
+       [Report_Table], since it is a finding about the audit process
+       rather than about [Document1], along with its resolution path
+       (checklist correction or EXECUTION_ENVIRONMENT_NOTED).
+       Plus the updated [Audit_Ledger], including:
+           – configured [Base_Threshold_], [Escalation_Trigger_Runs], and
+             [Defer_Limit]
+           – final run‑local [Threshold_] used (for traceability)
+           – all finding dispositions
+           – [Persistence_Count] and deferral count for every finding
+             eligible for Adjudication Escalation (GROUND_TRUTH_CONFLICT,
+             LATE_DETECTED_BASELINE_FINDING, ordinary retry‑exhausted
+             findings, or ACCEPTED_DEVIATION)
+           – [Phase3_Cumulative_Delta] for this run's Phase 3 pass, for
+             traceability (does not carry forward — Phase 3 always
+             re‑initializes its budget at 0 each run)
+           – final word count of [Document1]
+       This serves as the input ledger on the next run. The final run‑local
+       [Threshold_] shall NOT initialize the next run.

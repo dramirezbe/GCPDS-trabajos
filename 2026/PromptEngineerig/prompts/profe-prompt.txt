@@ -1,0 +1,201 @@
+"[Speciality_Field] = 'Mashine Learning/Deep Learning and Systems Engineer'
+[regulatory_framework] = 'EU AI Act Annex IV; ISO/IEC 42001:2023'
+[My_Goal] = 'I am planning to design   AI moduls that will be dedicated to building, reviewing, and auditing Python notebooks focused on deep learning applications.'
+[Document1] = '02 PromptTL' (attached)
+[Ground_Truth_Entries] = 'Optional operator-supplied authoritative facts, terminology definitions, scope boundaries, structural requirements, governing assumptions, interface contracts, mandatory constraints, and approved project-level decisions. Default: none beyond the authoritative context and constraints explicitly defined in this prompt. Changes are permitted only between audit-and-revision cycles.'
+[Frozen_Ground_Truth] = 'The immutable semantic validator for the current audit-and-revision cycle. It consists only of the explicitly supplied authoritative context and constraints in this prompt — [Speciality_Field], [regulatory_framework], [My_Goal], [Global_Constraints], [Structural_Consistency], [Logical_&_Technical_Rigor], [Redundancy_Tone_&_Unsubstantiated_Claims] — plus [Ground_Truth_Entries]. Do not infer new Ground-Truth facts from wording introduced by a patch. If a required baseline fact is absent, flag the absence rather than inventing it. [Frozen_Ground_Truth] shall not change during the current audit-and-revision cycle; any authorized Ground-Truth change must be explicitly supplied through [Ground_Truth_Entries] between cycles before the next run begins.'
+[Canonical_Baseline] = 'At run initialization, the exact source content of [Document1] as supplied to the current run, before any current-run patch. It is the sole textual base for current-run reconstruction and remains unchanged during the run.'
+[Current_Patch] = 'An ordered list of only the patch operations accepted during the current run. Initialize empty. Candidate and consolidated document states shall be produced by mechanically applying this ordered list, plus any currently proposed candidate operation when applicable, to [Canonical_Baseline]. No full document state may be independently regenerated.'
+[Global_Constraints] =
+'Provide feedback exclusively on technical accuracy, logical structure, and procedural completeness (Step Sequencing, Input/Output Specification).
+Evaluate the document for internal coherence across sections. Flag (LOW/MEDIUM/HIGH/CRITICAL) any instance where information in one section conflicts with, contradicts, or is incompatible with information in another. If no baseline is provided, flag where one is necessary but absent.
+Treat existing formatting (heading styles, fonts, bold/italics, spacing, indentation, layout) as immutable. Do not suggest any visual or typographic changes.
+No source text (including comments, commands, or code blocks from the input files) may appear in audit findings, audit tables, audit logs, or explanatory audit output, except for controlled traceability fields (e.g., stable identifiers, line numbers, and SHA-256 hashes) that are explicitly required by the governance specification. This restriction does not apply to targeted corrective patches explicitly required by Task 2 or to the consolidated version of [Document1] required by the Final Output Requirements.
+Describe issues, using the following severity taxonomy:
+Band Definitions:
+BAND-01 LOW Score 1–3 Detectable; no execution impact
+BAND-02 MEDIUM Score 4–6 Ambiguous; inference required
+BAND-03 HIGH Score 7–9 Causes incorrect execution
+BAND-04 CRITICAL Score 10 Absolute blocker; release-halt.
+Score Anchors:
+01 LOW Cosmetic imprecision; zero execution impact
+02 LOW Detectable error; correct inference by competent reader
+03 LOW Precision degraded; correct execution still achievable
+04 MEDIUM Ambiguity present; most competent readers infer correctly
+05 MEDIUM Ambiguity present; non-experts likely to err
+06 MEDIUM Ambiguity present; domain experts disagree on interpretation
+07 HIGH Likely incorrect execution by competent reader
+08 HIGH Will cause incorrect execution under standard conditions
+09 HIGH Will cause system degradation or regulatory non-compliance
+10 CRITICAL Absolute blocker; no compensating factor possible'
+[Structural_Consistency] =
+'Section hierarchy alignment with stated document purpose.
+Cross-reference integrity between sections, figures, and tables.
+Terminology consistency across the document.
+Traceability chain existence and completeness: architecture → measurement → algorithm → calibration → evidence.
+Semantic flow and step-by-step coherence.'
+[Logical_&_Technical_Rigor] =
+'Parameters and specifications of [Speciality_Field] are mathematically coherent.
+Calibration procedures are technically valid and accurately traceable to the stated metrological standards.
+Compliance thresholds correctly reference regulatory frameworks [regulatory_framework].'
+[Redundancy_Tone_&_Unsubstantiated_Claims] =
+'Flag (and score) instances of:
+Redundancy: repeated definitions, duplicated parameter tables, restated objectives without additive content, and repeated caveats without consolidation. Recommend where content can be consolidated, shortened, or removed.
+Imprecision: vague, underspecified, or unquantified language — including performance or capability claims lacking uncertainty quantification, and qualifiers substituting for a quantified spec. (Terminology inconsistency across the document is scored under [Structural_Consistency] only; do not re-score it here.)
+Unsubstantiated_Claims: superlatives, unqualified capability claims, and marketing-style framing.
+Tone: inappropriate first-person or informal language in normative sections; passive/active voice inconsistent with regulatory conventions.
+Normative_Labeling: consistent use of SHALL/SHOULD/MAY per ISO/IEC conventions.'
+[Audit_Category_Hierarchy] = 'Assign every retained finding to exactly one processing category. If a finding affects more than one category, assign it to the earliest applicable category in this fixed hierarchy:
+CAT-01 Core Purpose, Scope, and Ground-Truth Consistency
+CAT-02 Architecture, Methodology, and System-Level Logic
+CAT-03 Interfaces, Dependencies, and Cross-Section Contracts
+CAT-04 Procedural and Operational Completeness
+CAT-05 Terminology, Definitions, and Internal Consistency
+CAT-06 Evidence, Validation, Acceptance, and Decision Logic
+CAT-07 Supplementary or Non-Core Material
+This hierarchy is frozen for the current audit-and-revision cycle. Categories govern processing order only; the three evaluation axes continue to govern how findings are detected and scored.'
+[Contextual_Importance] = 'For ordering findings that have the same category and severity, assign one ordinal level based on structural influence: FOUNDATIONAL — governs purpose, Ground Truth, core definitions, architecture/methodology, mandatory requirements, interfaces, acceptance logic, or conclusions relied on broadly; CORE — directly affects execution of a principal section or requirement; SUPPORTING — affects a bounded supporting section without broad propagation; SUPPLEMENTARY — affects non-core material only. Contextual importance does not change the numerical severity score.'
+[Dependency_Footprint] = 'For ordering findings still tied after category, severity, and contextual importance, assign BROAD when three or more distinct sections/contracts depend on the affected text or the dependency is document-wide; MODERATE when one or two distinct sections/contracts depend on it; LOCAL when no dependency extends beyond the affected textual unit. Dependency footprint does not change severity.'
+[Patch_Ceiling] = 'A Phase-1 patch shall not exceed 15% of the word count of the exact source span it corrects, or 102 words, whichever is larger. A patch exceeding this ceiling is rejected at Application (Step 2) and shall be re-proposed as a smaller patch, or, if a smaller patch cannot resolve the finding, escalated to the operator with the finding left unresolved rather than force-applied.'
+[Patch_Retry_Limit] = 'Maximum number of rejected patch attempts for one selected finding during Phase 1. Initialize to 3 unless explicitly configured otherwise. A rejected attempt includes an ineffective patch, a patch that conflicts with [Frozen_Ground_Truth], a patch that creates or exposes any patch-related finding with severity greater than [Regression_Threshold_], or a patch that cannot satisfy the applicable patch-size constraint.'
+[Base_Threshold_] = 'The persistent audit-threshold baseline for the document lineage. If [Audit_Ledger] supplies an explicitly configured [Base_Threshold_], use that value; otherwise initialize it to 7.5. [Base_Threshold_] shall not be modified automatically as a consequence of completing Pass 1, Pass 2, or any subsequent run. It may change only through an explicit operator configuration.'
+[Threshold_] = 'A run-local working threshold controlling which audit findings are selected for reporting and correction. At the start of every audit run, initialize [Threshold_] = [Base_Threshold_]. Pass-specific adjustments to [Threshold_] apply only within the current run and shall never become the automatic baseline of the next run.'
+[Regression_Threshold_] = 'A fixed patch-safety threshold of 4 on the 01–10 severity scale. It is independent of [Threshold_] and [Base_Threshold_]. A candidate patch shall be rejected if it causes or exposes any patch-related finding with severity strictly greater than [Regression_Threshold_]. [Regression_Threshold_] shall not be raised by pass-specific threshold adjustments.'
+[Differential_Finding_Classes] = 'On the second and subsequent lineage runs, and during every pre-patch/post-patch comparison, classify each apparently new or rediscovered finding using the following precedence:
+PATCH_INDUCED — the defect did not exist in the comparison baseline and is causally introduced by the patch or ordered patch set whose effect distinguishes the compared document states (the comparison patch);
+NEWLY_EXPOSED_DEPENDENCY — the implicated text may be unchanged, but a span changed by the comparison patch changes the semantic dependency and creates or exposes the defect;
+GROUND_TRUTH_CONFLICT — the defect is independently verifiable against [Frozen_Ground_Truth] and is not causally introduced or exposed by the comparison patch;
+LATE_DETECTED_BASELINE_FINDING — the defect independently existed in the comparison baseline but was missed by the preceding audit;
+DUPLICATE_REDISCOVERY — substantively identical to an existing ledger finding and no relevant source, dependency, or Ground-Truth condition changed;
+UNSUPPORTED_DIFFERENTIAL_FINDING — cannot be independently substantiated and has no Ground-Truth conflict or causal dependency on a changed span.
+PATCH_INDUCED and NEWLY_EXPOSED_DEPENDENCY are patch regressions. GROUND_TRUTH_CONFLICT and LATE_DETECTED_BASELINE_FINDING are retained as genuine findings but shall not, by themselves, cause reversion of an unrelated patch. DUPLICATE_REDISCOVERY shall reference the existing Finding ID rather than create a new finding. UNSUPPORTED_DIFFERENTIAL_FINDING shall be suppressed.'
+[Audit_Ledger] = 'A persistent record, keyed to [Document1]''s identity, of: the configured [Base_Threshold_] for the document lineage; the final run-local [Threshold_] used in the prior completed run for traceability only; every finding previously raised and its final disposition (Solved / Rejected-as-acceptable / Deferred); its Differential Finding Class when applicable; stable source-span identifiers and SHA-256 hashes; dependency-span identifiers/hashes when relevant; IDs, originating Finding IDs, and affected-span before/after identifiers/hashes of accepted patches; the Frozen-Ground-Truth version identifier or SHA-256 hash; the final Canonical-Baseline SHA-256 hash; and the cumulative word count of [Document1] at the end of the prior run. A run that supplies no ledger is treated as the first run for that document lineage, and [Base_Threshold_] initializes at 7.5. A prior run''s final run-local [Threshold_] shall not be used to initialize the next run. A finding previously marked Solved or Rejected-as-acceptable may be treated as DUPLICATE_REDISCOVERY only when its cited source span and relevant dependency spans are unchanged and it does not conflict with [Frozen_Ground_Truth].'
+---
+Act as an expert in [Speciality_Field]. As a goal, [My_Goal]
+Audience:
+Experts in [Speciality_Field], regulatory bodies, and system operators.
+For audit and inline display purposes, render [Document1] in working markdown format throughout Tasks 1 and 2. The consolidated version required by the Final Output Requirements shall reproduce the original source format of [Document1] exactly.
+[Global_Constraints] (Apply to all tasks below)
+---
+Task1 Overview
+Authoritative run-local initialization: [Threshold_] := [Base_Threshold_].
+Procedure1:
+Audit only [Document1] for coherence and consistency, using the following three evaluation axes. For every unique issue you find, assign the severity score (01–10), exactly one Category under [Audit_Category_Hierarchy], one [Contextual_Importance] level, and one [Dependency_Footprint] level. On the second and subsequent lineage runs, compare apparent new or rediscovered findings against [Audit_Ledger], the current source/dependency-span hashes, the preceding accepted-patch spans, and [Frozen_Ground_Truth], and classify them according to [Differential_Finding_Classes]. Do not suppress a finding merely because its own source span is unchanged: retain a GROUND_TRUTH_CONFLICT, NEWLY_EXPOSED_DEPENDENCY, or independently verifiable LATE_DETECTED_BASELINE_FINDING. Suppress only DUPLICATE_REDISCOVERY and UNSUPPORTED_DIFFERENTIAL_FINDING according to their defined rules.
+show the text "pass 1, threshold = ": [Threshold_]
+---
+Axis 1: [Structural_Consistency]
+---
+Axis 2: [Logical_&_Technical_Rigor]
+---
+Axis 3: [Redundancy_Tone_&_Unsubstantiated_Claims]
+---
+Reassign [Threshold_] := [Base_Threshold_] + 1
+Procedure2:
+show the text "pass 2, threshold = ": [Threshold_]
+Repeat Procedure1
+Output Format:
+Provide a single structured report containing only retained findings with a severity strictly greater than [Threshold_]. Suppress all lower-scored items and any finding classified as DUPLICATE_REDISCOVERY or UNSUPPORTED_DIFFERENTIAL_FINDING. Provide the findings as a single plain-text markdown table, describing ID, Category, Axis, Location, Score, Band, Contextual_Importance, Dependency_Footprint, Differential_Class, Finding. Use FIRST_RUN for Differential_Class when no prior lineage audit exists. Assign the table of findings to [Report_Table].
+Selection and Tie-Break Rule: process findings category by category in the fixed order of [Audit_Category_Hierarchy]. Select from the earliest category that still contains an eligible unresolved finding above [Threshold_]. Within that category, order findings by: (1) decreasing severity score; (2) decreasing [Contextual_Importance] in the order FOUNDATIONAL > CORE > SUPPORTING > SUPPLEMENTARY; (3) decreasing [Dependency_Footprint] in the order BROAD > MODERATE > LOCAL; and (4) ascending [ID] as assigned in [Report_Table], corresponding to earliest physical document order. A numerically higher-severity finding in a later category shall not bypass an eligible finding in an earlier category.
+Query = Y/N
+show text "input query"
+input Query
+IF REJECT (Query = N): Stop execution. Disregard the previous audit findings and do not use them as a basis for subsequent analysis.
+IF APPROVE (Query = Y): provide the fix of the first eligible issue selected under the Selection and Tie-Break Rule, and proceed to Task2 Overview
+---
+Task2 Overview
+Perform the following three phases sequentially:
+• Phase 1: Execute a corrective fixing loop for the issues reported in [Report_Table], extracted from [Document1].
+• Phase 2: Generate a consolidated version of [Document1] using the patched adaptation produced in Phase 1.
+• Phase 3: Execute a corrective consolidation loop for any Axis 3 findings raised in Phase 2, constrained to length-neutral-or-negative patches.
+---
+Phase 1: Corrective Fixing Loop of Selected Issues
+Objective:
+Iteratively address findings with a severity greater than [Threshold_] in [Report_Table], processing categories strictly in the order of [Audit_Category_Hierarchy] and applying the Selection and Tie-Break Rule within each category.
+For each selected finding, continue corrective attempts until the finding is successfully resolved or automatic correction is exhausted under [Patch_Retry_Limit] or [Patch_Ceiling].
+Phase 1 terminates when every above-threshold finding in [Report_Table] has either been resolved or explicitly left unresolved after bounded corrective attempts. An unresolved finding shall not cause the procedure to deadlock.
+Procedure:
+1. Selection:
+Identify and select the first eligible unresolved finding exceeding [Threshold_] under the Selection and Tie-Break Rule. Initialize [Patch_Retry_Count] = 0 for that selected finding. Record the current set of findings with severity greater than [Regression_Threshold_] across all three axes as [PrePatch_Findings]. Propose a targeted patch that specifically addresses the selected finding, subject to [Patch_Ceiling].
+2. Application:
+Check that the proposed patch is specific, actionable, minimally invasive, compliant with [Patch_Ceiling], and consistent with [Frozen_Ground_Truth].
+If the patch contradicts, redefines, or implicitly supersedes [Frozen_Ground_Truth]:
+◦ Reject the patch without modifying [Current_Patch] or the candidate document state.
+◦ Increment [Patch_Retry_Count].
+◦ If [Patch_Retry_Count] < [Patch_Retry_Limit], reformulate the patch for the same selected finding and repeat Step 2.
+◦ Otherwise leave the selected finding unresolved, record that the retry limit was exhausted because no Ground-Truth-consistent patch was obtained, remove it from the automatic retry queue, and proceed to Step 5.
+If the patch exceeds [Patch_Ceiling]:
+◦ Reject the patch without modifying [Document1].
+◦ Increment [Patch_Retry_Count].
+◦ If [Patch_Retry_Count] < [Patch_Retry_Limit], propose a smaller alternative patch for the same selected finding and repeat Step 2.
+◦ If no compliant smaller patch exists, or [Patch_Retry_Count] >= [Patch_Retry_Limit], leave the selected finding unresolved, record the reason, remove it from the automatic retry queue for the current Phase-1 run, and proceed to Step 5.
+If the patch satisfies [Patch_Ceiling] and [Frozen_Ground_Truth], produce the updated candidate version mechanically as ApplyPatch([Canonical_Baseline], [Current_Patch] followed by the proposed candidate patch). Do not independently regenerate the document.
+3. Audit:
+Review the updated candidate version for coherence and consistency using all three evaluation axes. Assign each unique issue a severity score (01–10), exactly one Category under [Audit_Category_Hierarchy], one [Contextual_Importance] level, and one [Dependency_Footprint] level.
+◦ Primary verification axis: the originating Axis of the selected finding. Explicitly re-evaluate the selected finding under that axis and determine whether its condition still exceeds [Threshold_].
+◦ Regression-check axes: evaluate the two remaining axes to determine whether the patch caused or exposed any new patch-related issue with severity greater than [Regression_Threshold_].
+◦ Axis 1: [Structural_Consistency]
+◦ Axis 2: [Logical_&_Technical_Rigor]
+◦ Axis 3: [Redundancy_Tone_&_Unsubstantiated_Claims]
+Record the resulting set of findings with severity greater than [Regression_Threshold_] across all three axes as [PostPatch_Findings].
+4. Evaluation:
+Compare [PostPatch_Findings] against [PrePatch_Findings].
+◦ Case A — Differential classification of apparently new findings:
+For every finding in [PostPatch_Findings] that was not substantively present in [PrePatch_Findings], classify it according to [Differential_Finding_Classes], using [PrePatch_Findings], the candidate patch span as the comparison patch, relevant dependency spans, and [Frozen_Ground_Truth].
+▪ Define [Patch_Regression_Findings] as the subset classified PATCH_INDUCED or NEWLY_EXPOSED_DEPENDENCY with severity greater than [Regression_Threshold_].
+▪ If [Patch_Regression_Findings] is nonempty: revert the candidate patch; show the text "patch reverted"; increment [Patch_Retry_Count]. If [Patch_Retry_Count] < [Patch_Retry_Limit], propose a different targeted patch for the same selected finding and repeat from Step 2. Otherwise leave the selected finding unresolved, record that correction exhausted the retry limit because of regression, remove it from the automatic retry queue, and proceed to Step 5. Do not evaluate Cases B or C for a reverted candidate.
+▪ If [Patch_Regression_Findings] is empty: retain GROUND_TRUTH_CONFLICT and LATE_DETECTED_BASELINE_FINDING items as genuine findings. If one exceeds [Threshold_], append it to [Report_Table] and the current unresolved queue unless already represented; it shall not by itself trigger reversion of the candidate patch.
+▪ For DUPLICATE_REDISCOVERY, reference the existing Finding ID and do not create a new queue item.
+▪ Suppress UNSUPPORTED_DIFFERENTIAL_FINDING.
+◦ Case B — Selected finding remains unresolved:
+If the selected finding still exceeds [Threshold_] under its originating axis, and no PATCH_INDUCED or NEWLY_EXPOSED_DEPENDENCY finding above [Regression_Threshold_] was identified:
+▪ Revert the candidate patch.
+▪ Show the text "patch reverted".
+▪ Increment [Patch_Retry_Count].
+▪ If [Patch_Retry_Count] < [Patch_Retry_Limit], propose a different targeted patch for the same selected finding and repeat from Step 2.
+▪ Otherwise leave the selected finding unresolved, record that the retry limit was exhausted without resolving it, remove it from the automatic retry queue, and proceed to Step 5.
+◦ Case C — Selected finding resolved with no regression:
+If the selected finding no longer exceeds [Threshold_] under its originating axis and no PATCH_INDUCED or NEWLY_EXPOSED_DEPENDENCY finding above [Regression_Threshold_] appears:
+▪ Append the candidate patch to the ordered [Current_Patch]. The accepted document state is then ApplyPatch([Canonical_Baseline], [Current_Patch]).
+▪ Mark the selected finding as resolved for the current run.
+▪ Update the current audit state from [PostPatch_Findings].
+▪ Proceed to Step 5.
+5. Queue Transition:
+Identify the next eligible unresolved finding from [Report_Table] under the Selection and Tie-Break Rule that:
+◦ exceeds [Threshold_]; and
+◦ has not already been resolved or removed from the automatic retry queue after bounded corrective attempts.
+If such a finding exists:
+◦ designate it as the new selected finding;
+◦ initialize [Patch_Retry_Count] = 0;
+◦ record the current findings with severity greater than [Regression_Threshold_] across all three axes as [PrePatch_Findings];
+◦ propose a targeted patch; and
+◦ repeat starting from Step 2.
+If no eligible finding remains, terminate Phase 1 and proceed to Phase 2.
+At Phase-1 termination:
+◦ if every above-threshold finding was resolved, state that no unresolved findings above [Threshold_] remain;
+◦ otherwise list every above-threshold finding left unresolved and the reason automatic correction terminated for that finding.
+---
+Phase 2: Producing the consolidated version with fixing patches
+Objective: Produce the consolidated version mechanically as ApplyPatch([Canonical_Baseline], [Current_Patch]), using the ordered Phase 1 approved patches already stored in [Current_Patch]. The consolidated version shall not be independently regenerated. Then audit the consolidated version using the evaluation axis: • Axis 3: [Redundancy_Tone_&_Unsubstantiated_Claims] Output: [Phase2_Findings] = every Axis 3 finding above [Threshold_] found in the consolidated version, in the same ID / Category / Axis / Location / Score / Band / Contextual_Importance / Dependency_Footprint / Differential_Class / Finding format as [Report_Table].
+---
+Phase 3: Corrective Consolidation Loop
+Objective:
+Resolve every finding in [Phase2_Findings] using patches that are length-neutral or length-reducing only — merges, deletions, or rewordings that do not add net new words relative to the source span they replace — and that remain consistent with [Frozen_Ground_Truth]. Each accepted Phase-3 patch shall be appended in order to [Current_Patch], and each candidate consolidated state shall be generated mechanically from [Canonical_Baseline] plus the ordered [Current_Patch] and the currently proposed candidate patch. Continue until no [Phase2_Findings] item remains above [Threshold_], or until a finding cannot be resolved without a net-positive-length patch, in which case it is left as Unsolved and reported as such rather than force-patched.
+Procedure:
+Apply Phase 1 Steps 1–2 and Step 4 to [Phase2_Findings] instead of [Report_Table], substituting the length-neutral-or-negative constraint for [Patch_Ceiling].
+Replace Phase 1 Step 3 with the following Phase-3 verification step:
+3. Audit:
+Review the updated consolidated version after each Phase-3 patch.
+◦ Primary verification axis: Axis 3 — [Redundancy_Tone_&_Unsubstantiated_Claims]. Re-evaluate the selected Axis 3 finding and determine whether the patch resolves it.
+◦ Regression-check axis: Axis 1 — [Structural_Consistency].
+◦ Regression-check axis: Axis 2 — [Logical_&_Technical_Rigor].
+Assign every unique issue identified during verification a severity score (01–10), exactly one Category under [Audit_Category_Hierarchy], one [Contextual_Importance] level, and one [Dependency_Footprint] level.
+For purposes of Phase 1 Step 4 as reused in Phase 3:
+◦ The selected finding is considered successfully resolved only if its Axis 3 condition no longer exceeds [Threshold_].
+◦ Classify every apparently new Axis 1, Axis 2, or Axis 3 finding according to [Differential_Finding_Classes]. Any PATCH_INDUCED or NEWLY_EXPOSED_DEPENDENCY finding with severity greater than [Regression_Threshold_] triggers the Phase 1 Step-4 reversion rule. Retain GROUND_TRUTH_CONFLICT and LATE_DETECTED_BASELINE_FINDING items without attributing them to the Phase-3 patch unless causality is established.
+---
+Final Output Requirements:
+• Phase 1 Output: A concise log of each iteration, listing the finding addressed, the patch applied, and the audit result. At the conclusion of Phase 1, state either that no unresolved findings above [Threshold_] remain or list each above-threshold finding left unresolved and the reason corrective attempts terminated.
+• Phase 2 Output: [Phase2_Findings], or a statement that none were found.
+• Phase 3 Output: A concise log of each iteration in the same format as Phase 1. At its conclusion, state whether [Phase2_Findings] was fully resolved or list remaining Unsolved items and why.
+• Provide the consolidated version of [Document1] in its original source latex-ready format, produced only as ApplyPatch([Canonical_Baseline], [Current_Patch]) using all approved fixing patches from Phase 1 and Phase 3. Do not independently regenerate unchanged text.
+• Provide [Report_Table], labeling each finding Solved, Rejected-as-acceptable, or Deferred (per [Audit_Ledger] scope-skip), plus the updated [Audit_Ledger], including the configured [Base_Threshold_], the final run-local [Threshold_] used in the completed run for traceability only, all finding dispositions, and [Document1]''s final word count, for use as the input ledger on the next run. The final run-local [Threshold_] shall not initialize the next run."
