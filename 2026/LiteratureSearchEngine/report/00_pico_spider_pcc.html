@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PICO, SPIDER and PCC — SDR-based FM commercial monitoring</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@500&display=swap">
+<style>
+:root{
+  --bg:#F5F0E6; --card:#FFFFFF; --ink:#1E2B30; --muted:#4A5658; --line:#DDD5C3; --panel:#EAE2D0;
+  --blue:#24587F; --rust:#B04A28; --green:#3F6B45;
+  --tint-blue:#E3ECF3; --tint-rust:#F6E4DB; --tint-green:#E2ECDF;
+  --dark:#1E2B30; --on-dark-muted:#C9D3D2;
+  --serif:'Fraunces',Georgia,serif; --sans:'DM Sans',system-ui,sans-serif; --mono:'DM Mono',ui-monospace,monospace;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#161E21; --card:#212C30; --ink:#F1ECE0; --muted:#A9B4B3; --line:#37464A; --panel:#1B2529;
+    --tint-blue:#1F3442; --tint-rust:#3A2A24; --tint-green:#22352A; --dark:#0E1417;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#161E21; --card:#212C30; --ink:#F1ECE0; --muted:#A9B4B3; --line:#37464A; --panel:#1B2529;
+  --tint-blue:#1F3442; --tint-rust:#3A2A24; --tint-green:#22352A; --dark:#0E1417;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--ink)}
+.page{max-width:1200px;margin:0 auto;background:var(--bg)}
+.eyebrow{font-size:14px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+h1,h2{margin:0;font-family:var(--serif);font-weight:800}
+h2{font-size:40px;letter-spacing:-.01em}
+.header{padding:72px 64px 0;display:flex;flex-direction:column;gap:18px}
+.header .kicker{font-size:15px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--rust)}
+.header h1{font-size:76px;line-height:1.04;letter-spacing:-.02em}
+.header .lede{font-size:26px;line-height:1.4;color:var(--muted);max-width:900px}
+.main{padding:56px 64px 64px;display:flex;flex-direction:column;gap:64px}
+.section{display:flex;flex-direction:column;gap:28px}
+.sec-head{display:flex;flex-direction:column;gap:6px}
+.fw-row{display:flex;gap:24px;align-items:stretch}
+.fw{flex:1 1 0;min-width:0;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:20px;overflow:hidden}
+.fw-top{color:#fff;padding:28px;display:flex;flex-direction:column;gap:10px}
+.fw-tag{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.fw-name{font-family:var(--serif);font-weight:800;font-size:60px;line-height:1;letter-spacing:-.02em}
+.fw-desc{font-size:16px;line-height:1.5}
+.fw-body{padding:26px 28px 28px;display:flex;flex-direction:column;gap:18px;flex-grow:1}
+.el{display:flex;gap:14px;align-items:flex-start}
+.el .k{flex-shrink:0;width:44px;height:38px;border-radius:8px;color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-weight:800;font-size:20px}
+.el .t{font-size:17px;font-weight:700}
+.el .d{font-size:15px;line-height:1.4;color:var(--muted)}
+.cue{margin-top:auto;border-radius:12px;padding:14px 16px;font-size:15px;line-height:1.4}
+.bg-blue{background:var(--blue)} .bg-rust{background:var(--rust)} .bg-green{background:var(--green)}
+.example{background:var(--panel);border-radius:28px;padding:44px;display:flex;flex-direction:column;gap:28px}
+.quote{font-family:var(--serif);font-weight:600;font-style:italic;font-size:30px;line-height:1.3}
+.cases{display:flex;flex-direction:column;gap:16px}
+.case{display:flex;gap:28px;background:var(--card);border-radius:18px;padding:24px 28px;align-items:flex-start}
+.case .badge-wrap{flex-shrink:0;width:120px}
+.badge{display:inline-block;color:#fff;font-family:var(--serif);font-weight:800;font-size:22px;padding:6px 16px;border-radius:10px}
+.case .q{flex:1 1 0;min-width:0;font-family:var(--serif);font-weight:600;font-size:23px;line-height:1.3}
+.case .parts{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:6px;font-size:16px;line-height:1.4}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.step{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px;display:flex;flex-direction:column;gap:10px}
+.step .n{font-family:var(--serif);font-weight:800;font-size:48px;line-height:1;color:var(--rust)}
+.step .h{font-size:19px;font-weight:700;line-height:1.3}
+.step .p{font-size:16px;line-height:1.5;color:var(--muted)}
+.code{background:var(--dark);border-radius:20px;padding:32px 36px;display:flex;flex-direction:column;gap:16px}
+.code .lbl{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--on-dark-muted)}
+.code .lines{font-family:var(--mono);font-weight:500;font-size:20px;line-height:1.7;color:#fff;display:flex;flex-direction:column;overflow-x:auto}
+.code .lines div{white-space:nowrap}
+.code .op{color:#F0A98A}
+.code .note{font-size:15px;line-height:1.5;color:var(--on-dark-muted)}
+.db-row{display:flex;gap:24px}
+.db{flex:1 1 0;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px;display:flex;flex-direction:column;gap:16px}
+.db .h{font-size:19px;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{border:1.5px solid var(--ink);border-radius:999px;padding:8px 18px;font-size:16px;font-weight:500}
+.foot{background:var(--dark);padding:56px 64px;display:flex;flex-direction:column;gap:28px}
+.foot h2{color:#fff}
+.foot-row{display:flex;gap:20px;align-items:stretch}
+.foot-a{flex:1 1 0;min-width:0;background:var(--green);border-radius:18px;padding:26px 28px;display:flex;flex-direction:column;gap:8px;color:#fff}
+.foot-b{flex:1.4 1 0;min-width:0;background:var(--card);border-radius:18px;padding:26px 28px;display:flex;flex-direction:column;gap:8px;color:var(--ink)}
+.foot .lab{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.foot .big{font-family:var(--serif);font-weight:800;font-size:32px}
+.foot p{margin:0;font-size:16px;line-height:1.5}
+.arrow{flex-shrink:0;display:flex;align-items:center}
+@media (max-width:900px){
+  .header{padding:48px 24px 0}.header h1{font-size:44px}.header .lede{font-size:20px}
+  .main{padding:40px 24px 48px;gap:48px}h2{font-size:30px}
+  .fw-row,.db-row,.foot-row{flex-direction:column}
+  .example{padding:24px;border-radius:20px}.quote{font-size:22px}
+  .case{flex-direction:column;gap:14px}.case .badge-wrap{width:auto}.case .q{font-size:20px}
+  .steps{grid-template-columns:1fr}
+  .foot{padding:40px 24px}.arrow{justify-content:center;transform:rotate(90deg);align-self:center}
+  .code{padding:24px}.code .lines{font-size:15px}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="kicker">Literature search guide · Electronic Engineering</div>
+  <h1>PICO, SPIDER and PCC</h1>
+  <div class="lede">How to turn a vague research proposal on SDR-based FM commercial monitoring in Colombia into concepts you can search. The three frameworks differ in the type of question you ask and the type of studies you are looking for.</div>
+</div>
+
+<div class="main">
+
+<!-- 01 FRAMEWORKS -->
+<div class="section">
+  <div class="sec-head">
+    <div class="eyebrow">01 · The frameworks</div>
+    <h2>Three frameworks, three kinds of question</h2>
+  </div>
+  <div class="fw-row">
+
+    <div class="fw">
+      <div class="fw-top bg-blue">
+        <div class="fw-tag" style="color:#D6E6F2">Quantitative · performance</div>
+        <div class="fw-name">PICO</div>
+        <div class="fw-desc">For questions of effect or performance: does technique X detect, measure or improve Y? In engineering, it fits system tests, benchmarks and controlled comparisons.</div>
+      </div>
+      <div class="fw-body">
+        <div class="el"><div class="k bg-blue">P</div><div><div class="t">Population</div><div class="d">What system, signal or dataset do you test on?</div></div></div>
+        <div class="el"><div class="k bg-blue">I</div><div><div class="t">Intervention</div><div class="d">Which method or technology is applied?</div></div></div>
+        <div class="el"><div class="k bg-blue">C</div><div><div class="t">Comparison</div><div class="d">Compared with what? (Can be omitted.)</div></div></div>
+        <div class="el"><div class="k bg-blue">O</div><div><div class="t">Outcome</div><div class="d">Which metric do you measure: accuracy, recall, latency?</div></div></div>
+        <div class="cue" style="background:var(--tint-blue)"><b>Verb cue:</b> “Effect of …”, “Performance of …”</div>
+      </div>
+    </div>
+
+    <div class="fw">
+      <div class="fw-top bg-rust">
+        <div class="fw-tag" style="color:#FBE3D8">Qualitative · mixed methods</div>
+        <div class="fw-name">SPIDER</div>
+        <div class="fw-desc">For questions about how people work with, perceive or experience something. PICO fits these studies poorly: they have no “intervention” or “comparison”.</div>
+      </div>
+      <div class="fw-body">
+        <div class="el"><div class="k bg-rust">S</div><div><div class="t">Sample</div><div class="d">Who takes part?</div></div></div>
+        <div class="el"><div class="k bg-rust">PI</div><div><div class="t">Phenomenon of Interest</div><div class="d">The experience or phenomenon.</div></div></div>
+        <div class="el"><div class="k bg-rust">D</div><div><div class="t">Design</div><div class="d">Type of study: interviews, case study, focus groups.</div></div></div>
+        <div class="el"><div class="k bg-rust">E</div><div><div class="t">Evaluation</div><div class="d">What is evaluated: perceptions, trust, barriers.</div></div></div>
+        <div class="el"><div class="k bg-rust">R</div><div><div class="t">Research type</div><div class="d">Qualitative or mixed methods.</div></div></div>
+        <div class="cue" style="background:var(--tint-rust)"><b>Verb cue:</b> “Experiences of …”</div>
+      </div>
+    </div>
+
+    <div class="fw">
+      <div class="fw-top bg-green">
+        <div class="fw-tag" style="color:#DDEBD9">Scoping reviews</div>
+        <div class="fw-name">PCC</div>
+        <div class="fw-desc">The most flexible framework. Use it when the topic is broad or poorly defined and you want to map what has been studied, not answer a closed question.</div>
+      </div>
+      <div class="fw-body">
+        <div class="el"><div class="k bg-green">P</div><div><div class="t">Population</div><div class="d">Who or what?</div></div></div>
+        <div class="el"><div class="k bg-green">C</div><div><div class="t">Concept</div><div class="d">The core concept or technology.</div></div></div>
+        <div class="el"><div class="k bg-green">C</div><div><div class="t">Context</div><div class="d">Where, or in what setting: country, sector, regulatory system.</div></div></div>
+        <div class="cue" style="background:var(--tint-green)"><b>Verb cue:</b> “What is known about …”</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 02 WORKED EXAMPLE -->
+<div class="example">
+  <div class="sec-head">
+    <div class="eyebrow">02 · Worked example</div>
+    <h2>One vague idea, three different questions</h2>
+  </div>
+  <div class="quote">“I want to use software-defined radio to monitor commercials on FM stations and check compliance in Colombia.”</div>
+
+  <div class="cases">
+    <div class="case">
+      <div class="badge-wrap"><div class="badge bg-blue">PICO</div></div>
+      <div class="q">Does SDR-based audio fingerprinting detect FM ad spots more accurately than manual listening logs?</div>
+      <div class="parts">
+        <div><b style="color:var(--blue)">P</b> · FM broadcasts (88–108 MHz) from Bogotá stations</div>
+        <div><b style="color:var(--blue)">I</b> · RTL-SDR receiver + audio fingerprinting</div>
+        <div><b style="color:var(--blue)">C</b> · manual listening logs</div>
+        <div><b style="color:var(--blue)">O</b> · precision, recall, missed spots</div>
+      </div>
+    </div>
+
+    <div class="case">
+      <div class="badge-wrap"><div class="badge bg-rust">SPIDER</div></div>
+      <div class="q">How do station managers and regulatory staff experience automated ad monitoring as compliance evidence?</div>
+      <div class="parts">
+        <div><b style="color:var(--rust)">S</b> · station managers, ANE / MinTIC inspectors</div>
+        <div><b style="color:var(--rust)">PI</b> · automated monitoring as compliance evidence</div>
+        <div><b style="color:var(--rust)">D</b> · interviews, focus groups</div>
+        <div><b style="color:var(--rust)">E</b> · perceptions, trust, barriers</div>
+        <div><b style="color:var(--rust)">R</b> · qualitative</div>
+      </div>
+    </div>
+
+    <div class="case">
+      <div class="badge-wrap"><div class="badge bg-green">PCC</div></div>
+      <div class="q">What is known about SDR-based broadcast monitoring for regulatory compliance in Colombia and Latin America?</div>
+      <div class="parts">
+        <div><b style="color:var(--green)">P</b> · FM broadcasters and spectrum regulators</div>
+        <div><b style="color:var(--green)">C</b> · SDR-based ad and broadcast monitoring</div>
+        <div><b style="color:var(--green)">C</b> · Colombia, Latin America</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 03 STEPS -->
+<div class="section">
+  <div class="sec-head">
+    <div class="eyebrow">03 · Practical steps</div>
+    <h2>Six steps for a vague proposal</h2>
+  </div>
+
+  <div class="steps">
+    <div class="step"><div class="n">1</div><div class="h">Choose the framework by the verb of your question</div><div class="p">“Performance of” → PICO. “Experiences of” → SPIDER. “What is known about” → PCC.</div></div>
+    <div class="step"><div class="n">2</div><div class="h">Fill in only what you already know</div><div class="p">With a vague proposal, having 2 of 4 elements is normal. Use the gaps to decide what you still need to specify, such as the receiver hardware or the metric.</div></div>
+    <div class="step"><div class="n">3</div><div class="h">List synonyms for each element</div><div class="p">For Concept: SDR, software-defined radio, RTL-SDR, USRP, plus Spanish equivalents (radio definida por software, monitoreo de radiodifusión, cuñas radiales).</div></div>
+    <div class="step"><div class="n">4</div><div class="h">Join them with Boolean operators</div><div class="p">Use OR between synonyms within an element, and AND between the elements.</div></div>
+    <div class="step"><div class="n">5</div><div class="h">Start with few elements</div><div class="p">In vague searches, combine only 2 or 3 concepts (SDR + FM, or FM + Colombia) instead of requiring every element at once.</div></div>
+    <div class="step"><div class="n">6</div><div class="h">Use the results to refine your thesis</div><div class="p">The articles show what is saturated (signal processing), what is missing (Colombian compliance cases), and which context is understudied. Your final question usually appears there.</div></div>
+  </div>
+
+  <div class="code">
+    <div class="lbl">Example search string</div>
+    <div class="lines">
+      <div>(SDR OR "software-defined radio" OR RTL-SDR OR USRP)</div>
+      <div><span class="op">AND</span> ("FM broadcast*" OR "radio broadcast*")</div>
+      <div><span class="op">AND</span> (advertis* OR commercial* OR "audio fingerprint*")</div>
+      <div><span class="op">AND</span> (Colombia OR "Latin America" OR compliance OR regulat*)</div>
+    </div>
+    <div class="note">OR inside an element widens the search. AND between elements narrows it.</div>
+  </div>
+</div>
+
+<!-- 04 DATABASES -->
+<div class="section">
+  <div class="sec-head">
+    <div class="eyebrow">04 · Where to search</div>
+    <h2>Choose databases that fit your framework</h2>
+  </div>
+  <div class="db-row">
+    <div class="db">
+      <div class="h">PICO and SPIDER</div>
+      <div class="chips"><div class="chip">IEEE Xplore</div><div class="chip">Scopus</div><div class="chip">Web of Science</div><div class="chip">ACM Digital Library</div></div>
+    </div>
+    <div class="db">
+      <div class="h">Theses written in Spanish</div>
+      <div class="chips"><div class="chip">SciELO</div><div class="chip">Redalyc</div><div class="chip">Dialnet</div><div class="chip">University repositories</div></div>
+    </div>
+    <div class="db">
+      <div class="h">Regulation and grey literature</div>
+      <div class="chips"><div class="chip">ANE</div><div class="chip">MinTIC</div><div class="chip">CRC</div><div class="chip">SIC</div></div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="foot">
+  <h2>Which one should you use?</h2>
+  <div class="foot-row">
+    <div class="foot-a">
+      <div class="lab" style="color:#DDEBD9">Very vague proposal</div>
+      <div class="big">Start with PCC</div>
+      <p>Explore the terrain and map what already exists.</p>
+    </div>
+    <div class="arrow">
+      <svg width="56" height="32" viewBox="0 0 56 32" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-label="then"><path d="M4 16h46M36 4l14 12-14 12"></path></svg>
+    </div>
+    <div class="foot-b">
+      <div class="lab" style="color:var(--muted)">Once your approach is clear</div>
+      <div class="big">Switch to PICO or SPIDER</div>
+      <p><b style="color:var(--blue)">Quantitative</b> → PICO. <b style="color:var(--rust)">Qualitative</b> → SPIDER. Either gives a more precise search.</p>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>
