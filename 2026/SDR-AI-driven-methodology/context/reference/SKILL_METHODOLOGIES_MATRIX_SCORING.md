@@ -207,14 +207,13 @@ Produce la evaluación en una estructura consolidada, directa y de alta legibili
 
 ### 7.1 Matriz consolidada de scoring (única matriz)
 
-Una **única tabla principal** con las metodologías en las filas y las dimensiones en las columnas:
+Una **única tabla principal** con todas las metodologías evaluadas en las filas y las dimensiones evaluadas en las columnas:
 
-| Bloque | ID | Metodología | D1 (×3) | D2 (×3) | D3 (×3) | D4 (×3) | D5 (×2) | Composite (/70) | Normalizado (/100) | Estado (Puerta Tier 1) |
+| Categoría / Tipo | ID | Metodología | D1 (×3) | D2 (×3) | D3 (×3) | D4 (×3) | D5 (×2) | Composite (/70) | Normalizado (/100) | Estado (Puerta Tier 1) |
 |:---:|:---:|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **A** | A1 | Spec-Driven Development (SDD) | 1.5 | 2.0 | 3.0 🚩 | 3.0 🚩 | 1.5 | 31.5 | 45.0 | ❌ Descalificada (D1 < 2.0) |
-| **A** | A2 | HULA (Atlassian) | ... | ... | ... | ... | ... | ... | ... | ... |
-| **B** | B1 | NTIA/ITS SCOS | ... | ... | ... | ... | ... | ... | ... | ... |
-| **C** | C2 | gr-playground | 3.5 | 3.0 | 3.0 | 3.0 | 2.0 | 39.5 | 56.4 | ✅ Calificada |
+| IA-assisted | M1 | [Nombre Metodología 1] | 1.5 | 2.0 | 3.0 🚩 | 3.0 🚩 | 1.5 | 31.5 | 45.0 | ❌ Descalificada (D1 < 2.0) |
+| SDR-sensor | M2 | [Nombre Metodología 2] | 4.0 | 1.5 | 3.0 | 2.0 | 2.0 | 35.5 | 50.7 | ❌ Descalificada (D2 < 2.0) |
+| Híbrida | M3 | [Nombre Metodología 3] | 3.5 | 3.0 | 3.0 | 3.0 | 2.0 | 39.5 | 56.4 | ✅ Calificada |
 
 - **Valores en celdas (D1–D5):** Score final combinado según la regla de §5.
 - **Banderas (🚩):** Marca con 🚩 cualquier dimensión con desbalance severo de doble ancla (`|SDR − AI| ≥ 2`).
@@ -222,10 +221,10 @@ Una **única tabla principal** con las metodologías en las filas y las dimensio
 
 ### 7.2 Hallazgos estructurales y síntesis
 
-Presenta un resumen conciso antes o después de la matriz:
-1. **Mecanismo de descalificación:** Cuántas y cuáles metodologías caen por la puerta Tier 1 y la simetría de fallos entre bloques A y B.
-2. **Brechas de doble ancla:** Análisis de dimensiones con banderas 🚩 y techos sistémicos (p. ej., D5).
-3. **Implicación composicional:** Metodologías donantes que aportan los puntajes más altos por dimensión para una composición viable.
+Presenta un análisis conciso derivado de la matriz:
+1. **Mecanismo de descalificación:** Cuántas y cuáles metodologías caen por la puerta Tier 1 y los patrones de fallo observados (p. ej., desbalance por falta de modelado SDR o ausencia de lazo agéntico AI).
+2. **Brechas de doble ancla:** Dimensiones con banderas 🚩 recurrentes y techos o huecos sistémicos comunes.
+3. **Implicación composicional:** Identificar qué metodologías aportan las facetas más sólidas por dimensión para construir una metodología compuesta viable.
 
 ### 7.3 Desglose de evidencia y facetas (Notas compactas)
 
