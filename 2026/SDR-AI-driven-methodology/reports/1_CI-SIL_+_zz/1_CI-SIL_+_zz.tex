@@ -22,6 +22,10 @@
 \definecolor{rulec}{HTML}{CBD3DC}
 \definecolor{shade}{HTML}{EEF2F6}
 \definecolor{headbg}{HTML}{DCE6F2}
+\definecolor{vfill}{HTML}{E9E8F7}\definecolor{vdraw}{HTML}{5B54B0}
+\definecolor{sfill}{HTML}{E2F2EA}\definecolor{sdraw}{HTML}{2E8B63}
+\definecolor{nfill}{HTML}{FBEBD2}\definecolor{ndraw}{HTML}{B5792A}
+\definecolor{hfill}{HTML}{F8E4DD}\definecolor{hdraw}{HTML}{B5472E}
 
 \hypersetup{pageanchor=false,colorlinks=true,linkcolor=accent,urlcolor=accent,citecolor=accent,
   pdftitle={CI+SIL x zz\_Workflow},pdfauthor={David Ramírez-Betancourt}}
@@ -57,6 +61,10 @@
   flow/.style={-{Stealth[length=3mm]},line width=0.7pt,color=accent},
   fb/.style={-{Stealth[length=3mm]},line width=0.6pt,color=muted,dashed},
   lbl/.style={font=\scriptsize,text=muted,align=center},
+  vb/.style={box,fill=vfill,draw=vdraw,text=ink},
+  sb/.style={box,fill=sfill,draw=sdraw,text=ink},
+  nb/.style={box,fill=nfill,draw=ndraw,text=ink},
+  hb/.style={box,fill=hfill,draw=hdraw,text=ink},
   node distance=8mm
 }
 
@@ -105,8 +113,9 @@ keeps claims honest: it delivers \emph{verification}, and it leaves live
 \emph{validation} to downstream tiers.
 
 Sections 2 to 4 give the foundation and the methodological landscape. Sections 5 and 6
-cover AI-assisted hypothesis validation and the engine itself. Sections 7 and 8 analyse
-and then refine the coupling, and Section 9 concludes.
+cover AI-assisted hypothesis validation and the engine itself. Sections 7 to 9 analyse
+the coupling, contrast it with the V-model in detail, and then refine it; Section 10
+concludes.
 
 \section{Foundation: Current AI Agents}
 
@@ -206,12 +215,12 @@ currently covers.
 \centering
 \resizebox{\textwidth}{!}{%
 \begin{tikzpicture}
-  \node[acc,minimum width=20mm,font=\scriptsize] (p1) {1. Encuadre\\(G0)};
-  \node[mut,right=9mm of p1] (p2) {2. Modelo\\(G1)};
+  \node[acc,minimum width=20mm,font=\scriptsize] (p1) {1. Framing\\(G0)};
+  \node[mut,right=9mm of p1] (p2) {2. Model\\(G1)};
   \node[acc,right=9mm of p2] (p3) {3. Software/CI\\(G2)};
-  \node[gap,right=9mm of p3] (p4) {4. Banco HIL\\(G3)};
-  \node[acc,right=9mm of p4] (p5) {5. Juicio\\(G4)};
-  \node[gap,right=9mm of p5] (p6) {6. Decisi\'on\\MCDA};
+  \node[gap,right=9mm of p3] (p4) {4. HIL bench\\(G3)};
+  \node[acc,right=9mm of p4] (p5) {5. Judgment\\(G4)};
+  \node[gap,right=9mm of p5] (p6) {6. Decision\\MCDA};
   \foreach \a/\b/\g in {p1/p2/G0,p2/p3/G1,p3/p4/G2,p4/p5/G3,p5/p6/G4}{
     \node[gate] (g\g) at ($(\a)!0.5!(\b)$) {\g};
     \draw[flow] (\a) -- (g\g); \draw[flow] (g\g) -- (\b);
@@ -337,6 +346,176 @@ proposes and evaluates, optimization pressure exploits evaluator weaknesses
 
 Against the six phases of Figure~\ref{fig:phases}: phases 1, 3, 5 are \textbf{covered};
 phase 2 is \textbf{partial}; phases 4 and 6 are \textbf{gaps}.
+
+\section{V-model vs.\ CI+SIL}
+
+The coupling table rates the V-model as a HIGH--MEDIUM alternative to CI+SIL. The two
+are often read as rival paradigms, but they are not: \textbf{CI+SIL is the V-model's
+right arm made continuous}. Understanding the relationship clarifies why CI+SIL is the
+cleaner choice for zz\_Workflow while the V-model's structure is largely preserved.
+
+\subsection{The classic V-model}
+
+The V-model pairs a descending \emph{design/verification} arm with an ascending
+\emph{testing/validation} arm \cite{qmsdoc2026,sheridan2026b}. Each left-hand level
+(system requirements, system design, architecture design, module design) \emph{defines
+the tests} for the right-hand level that mirrors it: requirements $\leftrightarrow$
+acceptance, system design $\leftrightarrow$ system test, architecture
+$\leftrightarrow$ integration, module design $\leftrightarrow$ unit test. The valley is
+implementation. The dashed horizontals in Figure~\ref{fig:vclassic} are these
+``defines-its-tests'' links. The model is strong on traceability and on separating
+verification from validation, but in its classic form the entire right arm is a
+\emph{single, late} pass: tests run once, after the full descent and ascent, and the
+oracle arrives at the end.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{0.95\textwidth}{!}{%
+\begin{tikzpicture}[x=16mm,y=13mm,every node/.style={font=\scriptsize}]
+  % left descending design/verification arm
+  \node[vb,minimum width=24mm] (req)  at (0,0)    {System\\requirements};
+  \node[vb,minimum width=24mm] (dsys) at (1,-1.1) {System\\design};
+  \node[vb,minimum width=24mm] (darq) at (2,-2.2) {Architecture\\design};
+  \node[vb,minimum width=24mm] (dmod) at (3,-3.3) {Module\\design};
+  \node[mut,minimum width=24mm](impl) at (4,-4.4) {Implementation\\(coding)};
+  % right ascending testing/validation arm
+  \node[sb,minimum width=24mm] (uni)  at (5,-3.3) {Unit\\tests};
+  \node[sb,minimum width=24mm] (int)  at (6,-2.2) {Integration\\tests};
+  \node[sb,minimum width=24mm] (sys)  at (7,-1.1) {System\\tests};
+  \node[sb,minimum width=24mm] (acc)  at (8,0)    {Acceptance\\tests};
+  % flow down and up
+  \foreach \a/\b in {req/dsys,dsys/darq,darq/dmod,dmod/impl,impl/uni,uni/int,int/sys,sys/acc}{%
+    \draw[flow] (\a) -- (\b);}
+  % defines-its-tests dashed horizontals
+  \draw[fb] (req)  -- (acc);
+  \draw[fb] (dsys) -- (sys);
+  \draw[fb] (darq) -- (int);
+  \draw[fb] (dmod) -- (uni);
+  % legend
+  \node[vb,minimum width=3mm,minimum height=3mm] (lv) at (0,-5.4) {};
+  \node[lbl,right=1mm of lv] (lvt) {Design / verification};
+  \node[sb,minimum width=3mm,minimum height=3mm,right=12mm of lvt] (ls) {};
+  \node[lbl,right=1mm of ls] (lst) {Testing / validation};
+  \draw[fb] ([xshift=12mm]lst.east) -- ++(0.7,0) node[lbl,right,text=muted] {Defines its tests};
+\end{tikzpicture}}
+\caption{The classic software V-model. A descending design/verification arm (purple)
+mirrors an ascending testing/validation arm (green); each left level \emph{defines the
+tests} for the level facing it (dashed). Implementation sits at the valley, and the whole
+right arm runs as a single late pass.}
+\label{fig:vclassic}
+\end{figure}
+
+\subsection{Re-reading the right arm as CI+SIL}
+
+CI+SIL keeps the same four test levels but changes \emph{when} and \emph{against what}
+they run. Instead of one late pass, the levels execute automatically and continuously
+against a software-modelled plant --- the SIL rung of the MIL$\to$SIL$\to$PIL$\to$HIL
+ladder \cite{opalrt2026,sheridan2026a}:
+
+\begin{itemize}[leftmargin=*,itemsep=1pt]
+\item \textbf{Unit} (pure logic) runs \emph{on every commit}; \textbf{integration} (SIL)
+  \emph{on every merge}; \textbf{system} (extended SIL) \emph{nightly}.
+\item \textbf{Acceptance} stays at the apex as \textbf{HIL + real hardware} --- the one
+  level that CI+SIL does \emph{not} absorb, and the shared downstream gap.
+\item To run the lower arm without RF, CI+SIL adds a thin substitution layer (amber in
+  Figure~\ref{fig:vmodel}): a \textbf{HAL} that abstracts the device behind an interface,
+  a \textbf{Mock HAL} of driver stubs, and \textbf{synthetic data} (golden I/Q, injected
+  error cases) that feed the mock. Purchased hardware sits behind the \emph{same} HAL,
+  so the swap from mock to real device is transparent to the code under test.
+\end{itemize}
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[x=16mm,y=13mm,every node/.style={font=\scriptsize}]
+  % left descending design/verification arm
+  \node[vb,minimum width=24mm] (req) at (0,0)    {System\\requirements};
+  \node[vb,minimum width=24mm] (dis) at (1,-1.1) {System\\design};
+  \node[vb,minimum width=24mm] (arq) at (2,-2.2) {Architecture\\design};
+  \node[vb,minimum width=24mm] (mod) at (3,-3.3) {Module\\design};
+  \node[mut,minimum width=24mm] (cod) at (4,-4.4){Coding};
+  % right ascending CI pipeline arm
+  \node[sb,minimum width=24mm] (uni) at (5,-3.3) {Unit\\(pure logic)};
+  \node[sb,minimum width=24mm] (int) at (6,-2.2) {Integration\\(SIL)};
+  \node[sb,minimum width=24mm] (sys) at (7,-1.1) {System\\(extended SIL)};
+  \node[hb,minimum width=24mm] (acc) at (8,0)    {Acceptance\\(HIL + real HW)};
+  % design-arm flow
+  \foreach \a/\b in {req/dis,dis/arq,arq/mod,mod/cod}{\draw[flow] (\a) -- (\b);}
+  % CI pipeline flow with triggers
+  \draw[flow] (cod) -- node[lbl,below,pos=0.55]{every commit} (uni);
+  \draw[flow] (uni) -- node[lbl,right,pos=0.5]{every merge} (int);
+  \draw[flow] (int) -- node[lbl,right,pos=0.5]{} (sys);
+  \draw[flow] (sys) -- node[lbl,right,pos=0.5]{nightly} (acc);
+  % defines-its-tests dashed horizontals
+  \draw[fb] (req) -- node[lbl,above]{defines criteria} (acc);
+  \draw[fb] (dis) -- node[lbl,above]{defines tests} (sys);
+  \draw[fb] (arq) -- (int);
+  \draw[fb] (mod) -- (uni);
+  % substitution layer (new in CI+SIL)
+  \node[nb,minimum width=24mm] (hal)  at (4,-5.8) {HAL\\(HW abstraction)};
+  \node[nb,minimum width=24mm] (mock) at (6,-5.8) {Mock HAL\\(driver stubs)};
+  \node[nb,minimum width=24mm] (dat)  at (6,-7.0) {Synthetic data\\(signals, errors)};
+  \node[mut,minimum width=24mm] (hw)  at (1.4,-7.0){Purchased HW\\(sensor, SDR\dots)};
+  \draw[flow] (cod) -- (hal);
+  \draw[flow] (hal) -- (mock);
+  \draw[flow] (dat) -- (mock);
+  \draw[flow] (mock) -- (uni);
+  \draw[flow] (hal) -- (hw);
+  % CI feedback loop
+  \draw[fb] (acc.east) -- ++(0.5,0) |- node[lbl,pos=0.25,right]{feedback} (dat.east);
+  % legend
+  \node[vb,minimum width=3mm,minimum height=3mm] (lv) at (0,-8.4) {};
+  \node[lbl,right=1mm of lv] (lvt) {V-model original};
+  \node[sb,minimum width=3mm,minimum height=3mm,right=10mm of lvt] (ls) {};
+  \node[lbl,right=1mm of ls] (lst) {SIL tests (CI)};
+  \node[nb,minimum width=3mm,minimum height=3mm,right=10mm of lst] (ln) {};
+  \node[lbl,right=1mm of ln] (lnt) {New in CI+SIL};
+  \node[hb,minimum width=3mm,minimum height=3mm,right=10mm of lnt] (lh) {};
+  \node[lbl,right=1mm of lh] {HIL (lab)};
+\end{tikzpicture}}
+\caption{The V-model re-read as CI+SIL. The descending design arm (purple) is unchanged;
+the ascending test arm (green) keeps the same four levels but runs continuously as SIL,
+triggered on commit, merge, and nightly, against a Mock HAL fed by synthetic I/Q (amber).
+Only acceptance stays at real hardware (red, HIL). The dashed horizontals are the
+V-model's ``defines-its-tests'' links.}
+\label{fig:vmodel}
+\end{figure}
+
+\subsection{Where they differ, and why CI+SIL wins here}
+
+Table~\ref{tab:vcisil} contrasts the two along the dimensions that matter for an
+LLM-assisted engine.
+
+\begin{table}[htbp]
+\centering
+\caption{V-model versus CI+SIL on the dimensions relevant to zz\_Workflow.}
+\label{tab:vcisil}
+\small
+\rowcolors{2}{white}{shade}
+\begin{longtable}{@{}>{\bfseries\raggedright}p{30mm}>{\raggedright}p{52mm}>{\raggedright\arraybackslash}p{52mm}@{}}
+\rowcolor{headbg}\textbf{Dimension} & \textbf{V-model} & \textbf{CI+SIL}\\
+\endhead
+Test cadence & One late pass after full descent/ascent. & Continuous: commit / merge / nightly.\\
+Oracle timing & Arrives at the end. & Fires on every change, early.\\
+Hardware need & Right arm tends to assume the target. & Lower arm runs on Mock HAL + synthetic I/Q; no RF.\\
+Traceability & Explicit and heavy; its main cost. & Lighter; encoded in the suite and baseline.\\
+Regression & Not intrinsic; re-runs are manual. & Intrinsic: every trigger re-runs the suite.\\
+Fit to zz\_Workflow & Matches the gated, traceable stages, but adds ceremony. & Matches Artefact~3 (already a regression harness) and the trigger-on-any-change reality.\\
+\end{longtable}
+\end{table}
+
+The V-model and CI+SIL agree on the two structural rules zz\_Workflow depends on: an
+\emph{oracle distinct from the generator} and a clean \emph{verification} vs.\
+\emph{validation} split, with live validation (HIL + field) left to the apex. They
+differ on cadence and cost. The V-model's structure already resembles zz\_Workflow ---
+gated stages, each defining its own acceptance --- which is why it scores HIGH--MEDIUM;
+but its single late test pass and heavy traceability apparatus are a poor match for a
+probabilistic generator whose behaviour can drift on \emph{any} model, prompt, or context
+change. CI+SIL preserves the V-model's level structure while making the right arm
+continuous and triggering on exactly those changes. It also demands no new concept from
+the engine: Artefact~3 is already the regression harness the V-model's right arm would
+have to build. The two are therefore not competitors but the same decomposition at two
+cadences, and the continuous one fits the engine with less overhead.
 
 \section{The Refined Coupling}
 
