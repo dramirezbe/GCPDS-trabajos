@@ -1,0 +1,404 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>CI+SIL × zz_Workflow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Saira+Semi+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Atlas de bloques: lienzo de papel cuadriculado con nodos posicionados y
+   capa SVG de aristas; panel de detalle lateral. Mismo lenguaje visual que
+   la referencia de metodologías. */
+:root{
+  --paper:#F4F6F8; --surface:#FFFFFF; --surface-2:#EAEEF2; --ink:#16202B; --ink-2:#4A5563; --rule:#CBD3DC;
+  --phase:#2458A6; --decision:#A86400; --output:#2C7A4B; --loop:#9B2F7F; --artifact:#5E6B78;
+  --focus:#1B62D6; --grid:rgba(36,88,166,.07); --mark:#FFE9A8; --shadow:0 10px 30px rgba(22,32,43,.16);
+  --font-body:"Atkinson Hyperlegible","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+  --font-head:"Saira Semi Condensed","Arial Narrow","Segoe UI",system-ui,sans-serif;
+  --font-code:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0E141B; --surface:#151D26; --surface-2:#1C2632; --ink:#E4EAF0; --ink-2:#A7B3C0; --rule:#2E3B4A;
+  --phase:#86ADF0; --decision:#E4A94E; --output:#74CC98; --loop:#E583C9; --artifact:#9DAAB7;
+  --focus:#8FB6FF; --grid:rgba(134,173,240,.07); --mark:#5A4A12; --shadow:0 10px 30px rgba(0,0,0,.5);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#0E141B; --surface:#151D26; --surface-2:#1C2632; --ink:#E4EAF0; --ink-2:#A7B3C0; --rule:#2E3B4A;
+  --phase:#86ADF0; --decision:#E4A94E; --output:#74CC98; --loop:#E583C9; --artifact:#9DAAB7;
+  --focus:#8FB6FF; --grid:rgba(134,173,240,.07); --mark:#5A4A12; --shadow:0 10px 30px rgba(0,0,0,.5);
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-body);line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--font-head);line-height:1.12;margin:0;letter-spacing:-.005em}
+a{color:var(--phase);text-underline-offset:2px}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:4px}
+.wrap{max-width:1200px;margin:0 auto;padding-inline:clamp(16px,3vw,32px);padding-block:0 60px}
+code{font-family:var(--font-code);font-size:.86em}
+sub{font-size:.72em}
+
+header{padding-block:34px 18px}
+.eyebrow{font-family:var(--font-code);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--phase);margin:0 0 12px}
+h1{font-size:clamp(1.8rem,4vw,2.7rem);font-weight:700;max-width:20ch;letter-spacing:-.015em}
+.lead{font-size:1.08rem;max-width:68ch;margin:14px 0 0;color:var(--ink-2)}
+.hint{margin-top:14px;font-size:.9rem;color:var(--ink-2)}
+.hint b{color:var(--ink)}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--rule);margin:22px 0 0;overflow-x:auto;scrollbar-width:thin}
+.tab{border:0;background:none;font:inherit;color:var(--ink-2);padding:11px 15px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap;font-weight:700;min-height:44px;display:flex;gap:9px;align-items:baseline}
+.tab .num{font-family:var(--font-head);color:var(--phase)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--phase)}
+.tab:hover{color:var(--ink)}
+
+.sec-intro{max-width:76ch;color:var(--ink-2);margin:18px 0 14px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.82rem;color:var(--ink-2);margin:0 0 12px;align-items:center}
+.legend .lg{display:inline-flex;align-items:center;gap:6px}
+.legend .sw{width:22px;height:14px;border:1.5px solid var(--k);background:var(--surface);border-radius:3px;vertical-align:-2px}
+.legend .sw.decision{border-radius:12px;border-width:2px}
+.legend .sw.output{border-style:double;border-width:3px}
+.legend .sw.artifact{border-style:dashed;background:var(--surface-2)}
+.legend .sw.input{border-left-width:5px}
+.legend svg{vertical-align:middle}
+
+.dg-shell{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}
+.dg-scroll{overflow:auto;border:1px solid var(--rule);border-radius:10px;background-color:var(--surface);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;max-width:100%}
+.dg-canvas{position:relative;margin:0 auto}
+.dg-canvas>svg{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
+.e-line{fill:none;stroke-width:1.7}
+.e-n{stroke:var(--ink-2)}
+.e-fb{stroke:var(--loop);stroke-dasharray:7 4;stroke-width:1.9}
+.e-opt{stroke:var(--artifact);stroke-dasharray:2 4;stroke-width:1.8;stroke-linecap:round}
+.e-lbl{font-family:var(--font-body);font-size:11.5px;fill:var(--ink-2);paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
+.e-lbl.fb{fill:var(--loop)} .e-lbl.opt{fill:var(--artifact)}
+.mk-n{fill:var(--ink-2)} .mk-fb{fill:var(--loop)} .mk-opt{fill:var(--artifact)}
+.node{position:absolute;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;
+  padding:7px 11px;border:1.5px solid var(--k);background:var(--surface);color:var(--ink);text-align:left;cursor:pointer;border-radius:7px;overflow:hidden;font:inherit}
+.node .k{font-size:.64rem;font-weight:700;color:var(--k);line-height:1.2;font-family:var(--font-code);letter-spacing:.02em}
+.node .t{font-family:var(--font-head);font-weight:600;font-size:.92rem;line-height:1.12;max-width:100%}
+.node .s{font-size:.72rem;color:var(--ink-2);line-height:1.25;max-width:100%}
+.node[data-kind="phase"]{--k:var(--phase);border-top-width:4px}
+.node[data-kind="decision"]{--k:var(--decision);border-width:2px;border-radius:22px;padding-inline:15px}
+.node[data-kind="output"]{--k:var(--output);border-style:double;border-width:4px}
+.node[data-kind="artifact"]{--k:var(--artifact);border-style:dashed;background:var(--surface-2)}
+.node[data-kind="input"]{--k:var(--ink);border-left-width:6px}
+.node:hover{box-shadow:0 0 0 3px color-mix(in srgb,var(--k) 28%,transparent)}
+.node[aria-pressed="true"]{box-shadow:0 0 0 3px var(--k);z-index:2}
+.dg-hint{font-size:.8rem;color:var(--ink-2);margin:6px 2px 0}
+.dg-text{margin-top:12px;font-size:.9rem}
+.dg-text summary{cursor:pointer;font-weight:700;padding:6px 0;font-family:var(--font-head)}
+.dg-text ol{margin:6px 0 0;padding-left:1.3em} .dg-text li{margin:3px 0}
+
+.dg-panel{position:sticky;top:14px;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:16px 16px 14px;max-height:calc(100vh - 28px);overflow:auto}
+.dg-panel .p-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.dg-panel .p-kind{font-size:.7rem;font-weight:700;font-family:var(--font-code);letter-spacing:.04em;text-transform:uppercase}
+.dg-panel h4{font-size:1.14rem;margin:5px 0 10px}
+.dg-panel .p-close{display:none;border:1px solid var(--rule);background:var(--surface);border-radius:8px;min-width:40px;min-height:40px;cursor:pointer;font-size:1.1rem;flex:none}
+.dg-panel .body p{margin:0 0 10px;font-size:.92rem}
+.dg-panel .body p:last-child{margin-bottom:0}
+.dg-panel .verbatim{border-left:3px solid var(--phase);padding-left:11px;color:var(--ink-2);font-style:italic}
+.dg-panel .badge{display:inline-block;font-family:var(--font-code);font-size:.64rem;letter-spacing:.03em;padding:2px 7px;border-radius:999px;border:1px solid currentColor;margin-bottom:10px}
+.dg-panel .b-ver{color:var(--phase)} .dg-panel .b-gen{color:var(--decision)}
+.dg-panel .src{margin-top:12px;font-size:.78rem;color:var(--ink-2);border-top:1px solid var(--rule);padding-top:9px}
+.dg-panel .p-empty{color:var(--ink-2);font-size:.92rem}
+
+footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--rule);font-size:.82rem;color:var(--ink-2);max-width:80ch}
+[hidden]{display:none!important}
+
+@media (max-width:1000px){
+  .dg-shell{grid-template-columns:1fr}
+  .dg-panel{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:90;max-height:68vh;border-radius:14px 14px 0 0;
+    box-shadow:var(--shadow);transform:translateY(105%);transition:transform .22s ease;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));visibility:hidden}
+  .dg-panel.open{transform:none;visibility:visible}
+  .dg-panel .p-close{display:inline-flex;align-items:center;justify-content:center}
+}
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Modo 2 · Diagramas de bloques · Acople elegido: CI + SIL</p>
+  <h1>CI+SIL × zz_Workflow</h1>
+  <p class="lead">Tres diagramas de bloques: zz_Workflow tal cual, la estructura general de CI+SIL, y su acople. Cada bloque es clicable y abre su definición a profundidad en el panel.</p>
+  <p class="hint">👆 <b>Haz clic (o enfoca con el teclado) en cualquier bloque</b> para ver su definición. Las aristas moradas punteadas son realimentación.</p>
+</header>
+
+<div class="tabs" role="tablist" aria-label="Diagramas">
+  <button class="tab" role="tab" id="tab-d1" aria-controls="d1" aria-selected="true"><span class="num">01</span> zz_Workflow sin acople</button>
+  <button class="tab" role="tab" id="tab-d2" aria-controls="d2" aria-selected="false"><span class="num">02</span> Estructura general CI+SIL</button>
+  <button class="tab" role="tab" id="tab-d3" aria-controls="d3" aria-selected="false"><span class="num">03</span> Acople CI+SIL + zz_Workflow</button>
+</div>
+
+<div class="legend" aria-hidden="true">
+  <span class="lg"><span class="sw phase" style="--k:var(--phase)"></span>Etapa / proceso</span>
+  <span class="lg"><span class="sw decision" style="--k:var(--decision)"></span>Puerta / decisión</span>
+  <span class="lg"><span class="sw output" style="--k:var(--output)"></span>Salida</span>
+  <span class="lg"><span class="sw input" style="--k:var(--ink)"></span>Entrada</span>
+  <span class="lg"><span class="sw artifact" style="--k:var(--artifact)"></span>Hueco / aguas abajo</span>
+  <span class="lg"><svg width="34" height="10"><path d="M1,5 H30" stroke="var(--loop)" stroke-width="1.9" stroke-dasharray="7 4" fill="none"/></svg>Realimentación</span>
+</div>
+
+<section id="d1" role="tabpanel" aria-labelledby="tab-d1">
+  <p class="sec-intro">Tomado tal cual del markdown de zz_Workflow (Figuras 1–3): cuatro etapas acotadas por contexto (Ctx 00–03) llevan del problema al prototipo verificado; los defectos vuelven a la etapa responsable por R0–R3. No se añade ni se extiende nada.</p>
+  <div class="dg-shell">
+    <div><div class="dg-scroll" id="scroll-d1"></div><p class="dg-hint">Desplázate para ver todo el diagrama.</p>
+      <details class="dg-text"><summary>Diagrama como texto</summary><ol id="text-d1"></ol></details></div>
+    <aside class="dg-panel" id="panel-d1" aria-label="Detalle de bloque"></aside>
+  </div>
+</section>
+
+<section id="d2" role="tabpanel" aria-labelledby="tab-d2" hidden>
+  <p class="sec-intro">La estructura general de integración continua sobre simulación (CI+SIL): cada cambio dispara build, análisis y pruebas contra una planta modelada en software, con puertas de calidad y bucle de reparación. Es el nivel de simulación de la escalera MIL→SIL→PIL→HIL.</p>
+  <div class="dg-shell">
+    <div><div class="dg-scroll" id="scroll-d2"></div><p class="dg-hint">Desplázate para ver todo el diagrama.</p>
+      <details class="dg-text"><summary>Diagrama como texto</summary><ol id="text-d2"></ol></details></div>
+    <aside class="dg-panel" id="panel-d2" aria-label="Detalle de bloque"></aside>
+  </div>
+</section>
+
+<section id="d3" role="tabpanel" aria-labelledby="tab-d3" hidden>
+  <p class="sec-intro">El acople: el “Verified Prototype + Evidence” de zz_Workflow entra como línea base de una tubería CI+SIL. La evidencia siembra la regresión; el routing de defectos R0–R3 se reutiliza; la puerta de aceptación sigue siendo determinista. El HIL vivo queda como hueco aguas abajo.</p>
+  <div class="dg-shell">
+    <div><div class="dg-scroll" id="scroll-d3"></div><p class="dg-hint">Desplázate para ver todo el diagrama.</p>
+      <details class="dg-text"><summary>Diagrama como texto</summary><ol id="text-d3"></ol></details></div>
+    <aside class="dg-panel" id="panel-d3" aria-label="Detalle de bloque"></aside>
+  </div>
+</section>
+
+<footer>
+  Modo 2 (explicador). Diagrama 1 = contenido del markdown de zz_Workflow, sin extender. Diagramas 2–3 = estructura general y acople, coherentes con el <a href="https://claude.ai/artifact/PuApRZrcdTQxunScrbz9kT">análisis de acople</a> y sus fuentes ~2026. Donde el markdown no nombra la salida de una etapa (Ctx 01/02), se indica en la definición del bloque en vez de inventarla.
+</footer>
+</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <marker id="mk-n" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk-n"/></marker>
+  <marker id="mk-fb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk-fb"/></marker>
+  <marker id="mk-opt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="mk-opt"/></marker>
+</defs></svg>
+
+<script>
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+// ---- Definiciones ----
+const DEFS = {
+ "d1-ctx00":{badge:"ver",kind:"Entrada · Ctx 00",t:"Project Definition → Problem Baseline",body:[
+   {v:1,p:"“Problem Baseline means the agreed, stable definition of the problem the project is intended to solve before detailed requirements or architecture are developed.”"},
+   {p:"Salida de Ctx 00 — Project Definition: propósito y objetivo de monitoreo, usuarios y entorno operacional previstos, frontera del sistema, scope declarado y fuentes técnicas/regulatorias autoritativas."},
+   {p:"Congela el scope del proyecto; solo se reabre a través de R0 como cambio controlado."}],src:"zz_Workflow.md · Fig. 1–2"},
+ "d1-ctx01":{badge:"ver",kind:"Etapa · Ctx 01",t:"Requisitos, restricciones y criterios de aceptación",body:[
+   {p:"Fija restricciones, criterios de aceptación y plataforma de cómputo objetivo; estos criterios son los que se comprueban en la verificación."},
+   {p:"SDR: bajo cierto umbral de SNR el sensor debe reportar la banda como ‘Uncertain’ en vez de ‘Free’."},
+   {p:"Nota: el markdown no nombra una salida única de Ctx 01 (sí de Ctx 00 y Ctx 03); no se inventa."}],src:"zz_Workflow.md · Tabla 1, Artefactos 3–4"},
+ "d1-gate1":{badge:"ver",kind:"Puerta de readiness",t:"Transición Ctx 01 → 02",body:[
+   {v:1,p:"“…protected by an explicit readiness gate… the model drafts within a stage but never approves its own output.”"},
+   {p:"El humano revisor decide si se avanza; una puerta fallida devuelve el flujo (realimentación)."}],src:"zz_Workflow.md · Fig. 2"},
+ "d1-ctx02":{badge:"ver",kind:"Etapa · Ctx 02",t:"Arquitectura (instanciación concreta)",body:[
+   {p:"La arquitectura (prompts, descomposición de tareas, routing, fallback) se concreta en Ctx 02–03."},
+   {p:"Nota: como Ctx 01, el markdown no nombra una salida única de Ctx 02; se etiqueta por su función sin extender."}],src:"zz_Workflow.md · Tabla 1, Artefacto 1"},
+ "d1-gate2":{badge:"ver",kind:"Puerta de readiness",t:"Transición Ctx 02 → 03",body:[
+   {p:"Segunda puerta explícita. El humano decide el avance; un defecto clasificado puede devolver el flujo a esta etapa."}],src:"zz_Workflow.md · Fig. 2"},
+ "d1-ctx03":{badge:"ver",kind:"Etapa · Ctx 03",t:"Contrato → Build package (conector A)",body:[
+   {v:1,p:"“The Ctx 03 contract fixes the sensor’s processing chain — hardware sweep (e.g., via hackrf sweep), FFT and power spectral density (PSD) estimation, and classification — and specifies fallback behavior for dropped samples, receiver saturation, and local-oscillator tuning delay. Generated code is verified against this contract.”"},
+   {p:"Su salida es el build package, que el conector A lleva a la fase de build y verificación (Fig. 3)."}],src:"zz_Workflow.md · Artefacto 1, Fig. 2–3"},
+ "d1-build":{badge:"ver",kind:"Etapa · Fig. 3",t:"Build",body:[{p:"Construcción a partir del build package recibido por el conector A. El código se construye para verificarse contra el contrato Ctx 03."}],src:"zz_Workflow.md · Fig. 3"},
+ "d1-verif":{badge:"ver",kind:"Etapa · Fig. 3",t:"Verification run",body:[
+   {v:1,p:"“Golden test vectors are synthetic or controlled-source I/Q samples at known signal-to-noise ratios (SNR). The prototype is benchmarked on probability of detection (Pd), probability of false alarm (Pfa), classification accuracy under multipath fading and phase noise, and inference latency on the target compute platform declared in Ctx 01.”"},
+   {p:"Incluye robustez ante no-idealidades de RF; las desviaciones se registran y enlazan a su clase de fallo (telemetría)."}],src:"zz_Workflow.md · Artefactos 3 y 5"},
+ "d1-accept":{badge:"ver",kind:"Puerta · Fig. 3",t:"Aceptación (criterios pre-declarados)",body:[
+   {v:1,p:"“Acceptance is decided by pre-declared criteria applied to recorded measurements, never by model judgement.”"},
+   {p:"Ningún output del modelo entra a un baseline sin fuente trazable o prueba; cada decisión de puerta queda reservada al humano."}],src:"zz_Workflow.md · Artefacto 4"},
+ "d1-vp":{badge:"ver",kind:"Salida terminal (caja roja)",t:"Verified Prototype",body:[
+   {p:"La caja roja marca la salida terminal; el flujo nominal (azul sólido) va del problema a este punto."},
+   {p:"‘Verificado’ = construido bien contra el contrato y los criterios pre-declarados; no es lo mismo que ‘validado’ en el entorno RF real."}],src:"zz_Workflow.md · Fig. 1 y 3"},
+ "d1-reflect":{badge:"ver",kind:"Etapa · Fig. 3",t:"Reflexión crítica",body:[
+   {v:1,p:"“…closing with a critical-reflection step on the verified prototype.”"},
+   {p:"Paso de reflexión crítica sobre el prototipo verificado que cierra la fase."}],src:"zz_Workflow.md · Fig. 3"},
+ "d1-route":{badge:"ver",kind:"Realimentación",t:"R0–R3 · defecto a la etapa responsable",body:[
+   {v:1,p:"“Connectors R0–R3 return a classified defect to the stage responsible for it. Once frozen, the project scope is reopened only through R0, as a controlled change.”"},
+   {p:"La telemetría registra por etapa ediciones, reintentos, resultados de puerta y clase de defecto; las clases de fallo recurrentes señalan el paquete Ctx a revisar."}],src:"zz_Workflow.md · Fig. 3, Artefacto 5"},
+
+ "d2-change":{badge:"gen",kind:"Entrada",t:"Cambio / commit",body:[{p:"Un desarrollador (o, en flujo asistido por LLM, el modelo) propone un cambio: código, o también modelo, prompt o paquete de contexto. Es el evento que arranca el ciclo."}],src:"Patrón general CI (TDD/CI sobre simulación)"},
+ "d2-vcs":{badge:"gen",kind:"Etapa",t:"Control de versiones",body:[{p:"El cambio se registra en control de versiones (rama/PR). Da trazabilidad y es el punto contra el que se evalúan las puertas de calidad."}],src:"Patrón general CI"},
+ "d2-trigger":{badge:"gen",kind:"Etapa",t:"Trigger automático de CI",body:[{p:"Cada cambio dispara la tubería automáticamente; la evaluación no depende de que alguien la corra a mano."}],src:"Patrón general CI"},
+ "d2-build":{badge:"gen",kind:"Etapa",t:"Build automatizado",body:[{p:"Se compila el software (y, si el diseño viene de un modelo, se genera el código a partir del modelo del controlador, al estilo MIL→SIL)."}],src:"MIL/SIL (AnalogicTips, 2022)"},
+ "d2-static":{badge:"gen",kind:"Etapa",t:"Análisis estático + unitarias",body:[{p:"Lint, formato, chequeo de tipos y pruebas unitarias. Baratas y rápidas; filtran defectos antes de la simulación, que es más cara."}],src:"Patrón general CI"},
+ "d2-sil":{badge:"gen",kind:"Núcleo",t:"SIL — Software-in-the-Loop",body:[
+   {v:1,p:"SIL simula “the software as C code and the plant as a software model” en una PC, sin hardware real."},
+   {p:"El software bajo prueba corre contra una planta modelada en software. Todo ocurre en host, sin radio física en el lazo."}],src:"AnalogicTips, MIL/SIL/PIL/HIL (2022)"},
+ "d2-regress":{badge:"gen",kind:"Núcleo",t:"Regresión contra vectores golden",body:[{p:"Se ejecutan datasets de referencia (golden) y casos límite, comparando contra una línea base conocida. Detecta deriva y regresiones que las unitarias no ven."}],src:"Patrón general CI / eval suites"},
+ "d2-gate":{badge:"gen",kind:"Puerta",t:"Puertas de calidad",body:[{p:"Umbrales sobre métricas (cobertura, exactitud, latencia). Verde = se promueve; rojo = falla y vuelve al autor del cambio. Determinista, no subjetiva."}],src:"Patrón general CI"},
+ "d2-promote":{badge:"gen",kind:"Salida",t:"Merge / promote",body:[{p:"Con todo en verde, el cambio se integra. En la escalera, lo siguiente aguas abajo sería PIL (procesador real) y luego HIL (hardware en lazo cerrado), fuera del tier de simulación."}],src:"Escalera MIL→SIL→PIL→HIL"},
+
+ "d3-entry":{badge:"gen",kind:"Entrada al sistema",t:"Verified Prototype + Evidence",body:[{p:"La salida de zz_Workflow entra como entrada inicial: código ya verificado contra el contrato Ctx 03 y un paquete de evidencia. El lado izquierdo (definir, generar, verificar en sim) ya está hecho."}],src:"Acople zz_Workflow → CI+SIL"},
+ "d3-seed":{badge:"gen",kind:"Etapa",t:"Evidencia → línea base de regresión",body:[
+   {p:"El paquete de evidencia (curvas esperadas Pd/Pfa, latencia, golden I/Q a SNR conocido) siembra la línea base de regresión. El Artefacto 3 de zz_Workflow ya es ese arnés."},
+   {p:"Acople ALTO/limpio: es donde zz_Workflow y CI+SIL encajan sin fricción."}],src:"zz_Workflow Artefacto 3 · análisis de acople"},
+ "d3-repo":{badge:"gen",kind:"Etapa",t:"Código + contrato Ctx 03",body:[{p:"El código y el contrato Ctx 03 viven en control de versiones; el contrato actúa como especificación ejecutable contra la que se verifica cada build."}],src:"Acople"},
+ "d3-trigger":{badge:"gen",kind:"Etapa",t:"Trigger = cambio de modelo/prompt/Ctx",body:[
+   {v:1,p:"Artefacto 3: “regression checks of stage outputs after any model, prompt, or Ctx change”."},
+   {p:"El disparador no es solo un commit de código: también lo es cualquier cambio de modelo, prompt o contexto. Adaptación natural de CI a un sistema asistido por LLM."}],src:"zz_Workflow Artefacto 3"},
+ "d3-sil":{badge:"gen",kind:"Núcleo",t:"SIL — replay de I/Q controlado",body:[{p:"El prototipo corre en SIL contra I/Q sintético o de fuente controlada a SNR conocido (los vectores golden). Reproduce señal grabada/generada; no capta RF viva."}],src:"zz_Workflow Artefacto 3 · SIL"},
+ "d3-regress":{badge:"gen",kind:"Núcleo",t:"Regresión: Pd/Pfa/latencia vs evidencia",body:[{p:"Cada corrida compara Pd, Pfa, exactitud de clasificación y latencia contra la línea base de la evidencia. Una desviación es una regresión."}],src:"Acople"},
+ "d3-gate":{badge:"gen",kind:"Puerta determinista",t:"Aceptación (criterios Ctx 01)",body:[
+   {p:"Aplica los criterios pre-declarados de Ctx 01 sobre mediciones registradas. Se preserva el principio: el modelo nunca aprueba su salida."},
+   {v:1,p:"Literatura 2026: puertas deterministas donde “el rechazo mecánico vence a la aprobación del LLM, nunca al revés”."}],src:"arXiv:2609.02246 (sep 2026)"},
+ "d3-telemetry":{badge:"gen",kind:"Realimentación",t:"Telemetría (Artefacto 5)",body:[{p:"Ediciones, reintentos, resultados de puerta y clase de defecto se registran; las clases recurrentes señalan qué paquete Ctx revisar — cierra el lazo de mejora."}],src:"zz_Workflow Artefacto 5"},
+ "d3-route":{badge:"gen",kind:"Realimentación",t:"Defecto → R0–R3",body:[{p:"Se reutiliza el enrutamiento de zz_Workflow: un fallo clasificado vuelve a la etapa responsable (R0 reabre scope). La CI no solo dice ‘rojo’; dice a qué etapa devolver el defecto."}],src:"zz_Workflow Fig. 3 · acople"},
+ "d3-promote":{badge:"gen",kind:"Salida",t:"Promote (en verde)",body:[{p:"Con la regresión en verde y la puerta determinista superada, el cambio se promueve y la evidencia se actualiza como nueva línea base."}],src:"Acople"},
+ "d3-gap":{badge:"gen",kind:"Hueco · aguas abajo",t:"HIL vivo — NO cubierto",body:[
+   {p:"CI+SIL se queda en el tier de simulación: I/Q replay, sin RF real en lazo cerrado. La validación en banco HIL vivo (USRP/HackRF captando espectro real, generador inyectando señales conocidas, ruido calibrado) sigue siendo trabajo aguas abajo."},
+   {p:"Es la misma brecha: ‘verificado en simulación’ ≠ ‘validado en hardware’."}],src:"Análisis de acople · escalera HIL"}
+};
+
+// ---- Diagramas: nodos (x,y,w,h,kind) + aristas ----
+const NW=300, NH=62, LX=250, CW=600;
+const col=(y)=>({x:LX,y,w:NW,h:NH});
+const DIAG = {
+ d1:{ w:CW, h:1292, nodes:[
+   ["d1-ctx00","input",col(20),  "Ctx 00","Problem Baseline","scope congelado"],
+   ["d1-ctx01","phase",col(128), "Ctx 01","Requisitos + criterios","restricciones · aceptación"],
+   ["d1-gate1","decision",col(236),"Gate","Readiness Ctx 01→02","humano decide"],
+   ["d1-ctx02","phase",col(344), "Ctx 02","Arquitectura","instanciación concreta"],
+   ["d1-gate2","decision",col(452),"Gate","Readiness Ctx 02→03","humano decide"],
+   ["d1-ctx03","phase",col(560), "Ctx 03","Contrato → build package","conector A"],
+   ["d1-build","phase",col(668), "Fig. 3","Build","construcción"],
+   ["d1-verif","phase",col(776), "Fig. 3","Verification run","Pd · Pfa · latencia"],
+   ["d1-accept","decision",col(884),"Fig. 3","Aceptación","criterios pre-declarados"],
+   ["d1-vp","output",col(992),  "SALIDA","Verified Prototype","caja roja terminal"],
+   ["d1-reflect","phase",col(1100),"Fig. 3","Reflexión crítica","cierre"],
+   ["d1-route","artifact",{x:LX,y:1208,w:NW,h:64}, "R0–R3","Enrutamiento de defectos","a la etapa responsable"]
+ ], edges:[
+   ["d1-ctx00","d1-ctx01","flow"],["d1-ctx01","d1-gate1","flow"],["d1-gate1","d1-ctx02","flow"],
+   ["d1-ctx02","d1-gate2","flow"],["d1-gate2","d1-ctx03","flow"],["d1-ctx03","d1-build","flow"],
+   ["d1-build","d1-verif","flow"],["d1-verif","d1-accept","flow"],["d1-accept","d1-vp","flow"],["d1-vp","d1-reflect","flow"],
+   ["d1-accept","d1-route","fb",{lane:565,label:"defecto"}],
+   ["d1-route","d1-ctx00","fb",{lane:40,label:"R0"}],
+   ["d1-route","d1-ctx01","fb",{lane:80,label:"R1"}],
+   ["d1-route","d1-ctx02","fb",{lane:120,label:"R2"}],
+   ["d1-route","d1-ctx03","fb",{lane:160,label:"R3"}]
+ ]},
+ d2:{ w:CW, h:1000, nodes:[
+   ["d2-change","input",col(20),  "ENTRADA","Cambio / commit","código · modelo · prompt"],
+   ["d2-vcs","phase",col(128),    "CI","Control de versiones","rama / PR"],
+   ["d2-trigger","phase",col(236),"CI","Trigger automático","en cada cambio"],
+   ["d2-build","phase",col(344),  "Pipeline","Build automatizado","compila / genera código"],
+   ["d2-static","phase",col(452), "Pipeline","Estático + unitarias","lint · tipos · tests"],
+   ["d2-sil","phase",col(560),    "Núcleo","SIL — Software-in-the-Loop","planta modelada en SW"],
+   ["d2-regress","phase",col(668),"Núcleo","Regresión golden","vs línea base"],
+   ["d2-gate","decision",col(776),"Puerta","Puertas de calidad","umbrales / cobertura"],
+   ["d2-promote","output",col(884),"SALIDA","Merge / promote","verde → integra"]
+ ], edges:[
+   ["d2-change","d2-vcs","flow"],["d2-vcs","d2-trigger","flow"],["d2-trigger","d2-build","flow"],
+   ["d2-build","d2-static","flow"],["d2-static","d2-sil","flow"],["d2-sil","d2-regress","flow"],
+   ["d2-regress","d2-gate","flow"],["d2-gate","d2-promote","flow"],
+   ["d2-gate","d2-change","fb",{lane:120,label:"rojo → reparar"}]
+ ]},
+ d3:{ w:820, h:992, nodes:[
+   ["d3-entry","input",col(20),   "ENTRADA","Verified Prototype + Evidence","de zz_Workflow"],
+   ["d3-seed","phase",col(128),   "Siembra","Evidencia → baseline","golden I/Q · curvas Pd/Pfa"],
+   ["d3-repo","phase",col(236),   "CI","Código + contrato Ctx 03","spec ejecutable"],
+   ["d3-trigger","phase",col(344),"CI","Trigger = modelo/prompt/Ctx","no solo commits"],
+   ["d3-sil","phase",col(452),    "Núcleo","SIL — replay de I/Q","sintético / fuente controlada"],
+   ["d3-regress","phase",col(560),"Núcleo","Regresión Pd/Pfa/latencia","vs evidencia"],
+   ["d3-gate","decision",col(668),"Puerta","Aceptación determinista","criterios Ctx 01"],
+   ["d3-promote","output",col(776),"SALIDA","Promote (verde)","evidencia actualizada"],
+   ["d3-route","decision",{x:LX,y:884,w:NW,h:62},"Realim.","Defecto → R0–R3","a etapa responsable"],
+   ["d3-telemetry","phase",{x:585,y:668,w:210,h:62},"Realim.","Telemetría (Artef. 5)","clases de fallo"],
+   ["d3-gap","artifact",{x:585,y:776,w:210,h:66},"HUECO","HIL vivo — fuera","RF real, lazo cerrado"]
+ ], edges:[
+   ["d3-entry","d3-seed","flow"],["d3-seed","d3-repo","flow"],["d3-repo","d3-trigger","flow"],
+   ["d3-trigger","d3-sil","flow"],["d3-sil","d3-regress","flow"],["d3-regress","d3-gate","flow"],["d3-gate","d3-promote","flow"],
+   ["d3-gate","d3-telemetry","branch",{label:"registra"}],
+   ["d3-gate","d3-route","fb",{lane:120,label:"rojo"}],
+   ["d3-route","d3-repo","fb",{lane:80,label:"R0–R3"}],
+   ["d3-regress","d3-gap","branch",{label:"aguas abajo",opt:1}]
+ ]}
+};
+
+const nodeById = (d,id)=> DIAG[d].nodes.find(n=>n[0]===id);
+const rect = n => n[2];
+const cx = r => r.x + r.w/2;
+const cy = r => r.y + r.h/2;
+
+function edgePath(ra,rb,type,opt){
+  if(type==="flow"){
+    const x=cx(ra); return {d:`M${x},${ra.y+ra.h} L${x},${rb.y}`, mk:"n", cls:"e-n", lx:x+8, ly:(ra.y+ra.h+rb.y)/2};
+  }
+  if(type==="fb"){
+    const lane=opt.lane, sx=ra.x, sy=cy(ra), by=cy(rb);
+    const bx = lane < cx(rb) ? rb.x : rb.x+rb.w;
+    return {d:`M${sx},${sy} H${lane} V${by} H${bx}`, mk:"fb", cls:"e-fb", lx:lane, ly:(sy+by)/2};
+  }
+  // branch (a la derecha)
+  const sx=ra.x+ra.w, sy=cy(ra), tx=rb.x, ty=cy(rb), mx=(sx+tx)/2;
+  return {d:`M${sx},${sy} H${mx} V${ty} H${tx}`, mk:opt&&opt.opt?"opt":"n", cls:opt&&opt.opt?"e-opt":"e-n", lx:mx, ly:(sy+ty)/2, lcls:opt&&opt.opt?"opt":""};
+}
+
+function build(did){
+  const dg=DIAG[did], scroll=document.getElementById("scroll-"+did);
+  // SVG edges
+  let paths="", labels="";
+  dg.edges.forEach(([a,b,type,opt])=>{
+    const ep=edgePath(rect(nodeById(did,a)),rect(nodeById(did,b)),type,opt||{});
+    paths+=`<path d="${ep.d}" class="e-line ${ep.cls}" marker-end="url(#mk-${ep.mk})"/>`;
+    if(opt&&opt.label){ const lc = type==="fb"?"fb":(ep.lcls||""); labels+=`<text x="${ep.lx}" y="${ep.ly}" class="e-lbl ${lc}" text-anchor="middle">${esc(opt.label)}</text>`; }
+  });
+  const canvas=document.createElement("div");
+  canvas.className="dg-canvas"; canvas.style.width=dg.w+"px"; canvas.style.height=dg.h+"px";
+  canvas.setAttribute("role","group"); canvas.setAttribute("aria-label","Diagrama de bloques");
+  canvas.innerHTML=`<svg width="${dg.w}" height="${dg.h}" viewBox="0 0 ${dg.w} ${dg.h}" aria-hidden="true">${paths}${labels}</svg>`;
+  // nodes
+  dg.nodes.forEach(n=>{
+    const [id,kind,r,k,t,s]=n, def=DEFS[id];
+    const b=document.createElement("button");
+    b.type="button"; b.className="node"; b.dataset.kind=kind; b.dataset.id=id; b.dataset.did=did;
+    b.setAttribute("aria-pressed","false");
+    b.style.cssText=`left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px`;
+    b.setAttribute("aria-label",`${k}: ${t}. ${s}`);
+    b.innerHTML=`<span class="k">${esc(k)}</span><span class="t">${esc(t)}</span><span class="s">${esc(s)}</span>`;
+    b.addEventListener("click",()=>select(did,id,b));
+    b.addEventListener("focus",()=>{ if(window.matchMedia("(min-width:1001px)").matches) select(did,id,b,true); });
+    canvas.appendChild(b);
+  });
+  scroll.appendChild(canvas);
+  // texto alterno
+  const ol=document.getElementById("text-"+did);
+  dg.nodes.forEach(n=>{ const li=document.createElement("li"); li.innerHTML=`<strong>${esc(n[4])}</strong> — ${esc(n[5])}`; ol.appendChild(li); });
+  // panel inicial
+  renderPanel(did,dg.nodes[0][0]);
+}
+
+function select(did,id,btn,noScroll){
+  document.querySelectorAll(`.node[data-did="${did}"]`).forEach(x=>x.setAttribute("aria-pressed","false"));
+  btn.setAttribute("aria-pressed","true");
+  renderPanel(did,id);
+  const panel=document.getElementById("panel-"+did);
+  if(window.matchMedia("(max-width:1000px)").matches && !noScroll){ panel.classList.add("open"); }
+}
+
+function renderPanel(did,id){
+  const p=document.getElementById("panel-"+did), d=DEFS[id];
+  if(!d){ p.innerHTML='<p class="p-empty">Haz clic en un bloque para ver su definición.</p>'; return; }
+  const bl=d.badge==="ver"?["b-ver","Verbatim del markdown"]:["b-gen","Estructura general / acople"];
+  let h=`<div class="p-top"><div><span class="badge ${bl[0]}">${bl[1]}</span><div class="p-kind" style="color:var(--ink-2)">${esc(d.kind)}</div></div><button class="p-close" aria-label="Cerrar">✕</button></div>`;
+  h+=`<h4>${esc(d.t)}</h4><div class="body">`;
+  d.body.forEach(x=>{ h+=`<p${x.v?' class="verbatim"':''}>${esc(x.p)}</p>`; });
+  h+=`</div><div class="src">Fuente: ${esc(d.src)}</div>`;
+  p.innerHTML=h;
+  p.querySelector(".p-close").addEventListener("click",()=>p.classList.remove("open"));
+}
+
+["d1","d2","d3"].forEach(build);
+
+// tabs
+const tabs=document.querySelectorAll(".tab");
+tabs.forEach(tab=>tab.addEventListener("click",()=>{
+  tabs.forEach(t=>t.setAttribute("aria-selected","false"));
+  tab.setAttribute("aria-selected","true");
+  ["d1","d2","d3"].forEach(id=>document.getElementById(id).hidden=true);
+  document.getElementById(tab.id.replace("tab-","")).hidden=false;
+}));
+</script>
+
+</body></html>

@@ -1,0 +1,400 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Validar hipótesis con IA</title>
+<style>
+  /* Layout: documento de investigación a una columna legible, con tarjetas de flujo y
+     una franja de referencias; acento "señal" para el mundo SDR/RF. */
+  :root {
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --surface-2: #eceef2;
+    --fg: #1a1d24;
+    --muted: #596074;
+    --line: #d9dde4;
+    --accent: #0b6e86;       /* teal señal */
+    --accent-2: #b4531f;     /* ámbar HIL/hardware */
+    --ok: #1f7a43;
+    --warn: #9a6a00;
+    --code-bg: #f1f3f6;
+    --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+    --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #11141a;
+      --surface: #1a1e26;
+      --surface-2: #232834;
+      --fg: #e7eaf0;
+      --muted: #9aa2b4;
+      --line: #2d333f;
+      --accent: #46b7cf;
+      --accent-2: #e2904f;
+      --ok: #4cc47d;
+      --warn: #d9ab4a;
+      --code-bg: #161b22;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #11141a;
+    --surface: #1a1e26;
+    --surface-2: #232834;
+    --fg: #e7eaf0;
+    --muted: #9aa2b4;
+    --line: #2d333f;
+    --accent: #46b7cf;
+    --accent-2: #e2904f;
+    --ok: #4cc47d;
+    --warn: #d9ab4a;
+    --code-bg: #161b22;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    margin: 0;
+  }
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 0 72px;
+  }
+  header.hero {
+    padding-block: 52px 36px;
+    border-bottom: 1px solid var(--line);
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(30px, 6vw, 46px);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 0 0 16px;
+  }
+  .lede {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 62ch;
+    margin: 0;
+  }
+  .meta {
+    margin-top: 22px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+  }
+  .meta b { color: var(--fg); font-weight: 600; }
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(22px, 4vw, 30px);
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 52px 0 6px;
+    padding-top: 14px;
+  }
+  h2 .num {
+    font-family: var(--font-mono);
+    font-size: 0.56em;
+    color: var(--accent);
+    margin-right: 10px;
+    vertical-align: middle;
+  }
+  h3 {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 17px;
+    margin: 30px 0 4px;
+  }
+  p { margin: 12px 0; }
+  a { color: var(--accent); text-underline-offset: 2px; }
+  strong { font-weight: 650; }
+  .section-note {
+    color: var(--muted);
+    font-size: 15px;
+    margin-top: 2px;
+  }
+  ul, ol { padding-left: 20px; margin: 12px 0; }
+  li { margin: 7px 0; }
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  .pill {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+  }
+  /* trío de herramientas */
+  .tools {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 22px 0 6px;
+  }
+  .tool {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    min-width: 0;
+  }
+  .tool .tag {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+  }
+  .tool.code .tag { color: var(--accent); }
+  .tool.hil .tag { color: var(--accent-2); }
+  .tool.hitl .tag { color: var(--ok); }
+  .tool p { font-size: 13.5px; color: var(--muted); margin: 8px 0 0; }
+  @media (max-width: 560px) {
+    .tools { grid-template-columns: 1fr; }
+  }
+  /* flujo de pasos */
+  .flow {
+    list-style: none;
+    counter-reset: step;
+    padding: 0;
+    margin: 20px 0;
+    display: grid;
+    gap: 10px;
+  }
+  .flow li {
+    counter-increment: step;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: 10px;
+    padding: 14px 16px 14px 52px;
+    position: relative;
+    margin: 0;
+  }
+  .flow li::before {
+    content: counter(step);
+    position: absolute;
+    left: 14px; top: 13px;
+    width: 26px; height: 26px;
+    display: grid; place-items: center;
+    font-family: var(--font-mono);
+    font-size: 13px; font-weight: 600;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+  }
+  .flow li b { display: block; margin-bottom: 2px; }
+  .flow li span { color: var(--muted); font-size: 14.5px; }
+  blockquote {
+    margin: 18px 0;
+    padding: 2px 0 2px 18px;
+    border-left: 3px solid var(--accent-2);
+    color: var(--muted);
+    font-style: italic;
+  }
+  .callout {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin: 20px 0;
+  }
+  .callout .label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--warn);
+    margin: 0 0 6px;
+  }
+  .callout p { margin: 0; font-size: 14.5px; }
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 18px 0;
+  }
+  .split > div {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    min-width: 0;
+  }
+  .split h4 { margin: 0 0 6px; font-size: 15px; }
+  .split .green { color: var(--ok); }
+  .split .amber { color: var(--accent-2); }
+  .split ul { margin: 6px 0 0; font-size: 14px; }
+  @media (max-width: 560px) { .split { grid-template-columns: 1fr; } }
+  .ref-wrap {
+    margin-top: 40px;
+    border-top: 1px solid var(--line);
+    padding-top: 10px;
+  }
+  ol.refs { counter-reset: ref; list-style: none; padding: 0; }
+  ol.refs li {
+    counter-increment: ref;
+    padding: 12px 0 12px 34px;
+    border-bottom: 1px solid var(--line);
+    position: relative;
+    font-size: 14.5px;
+  }
+  ol.refs li::before {
+    content: "[" counter(ref) "]";
+    position: absolute; left: 0; top: 12px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--accent);
+  }
+  ol.refs .src { color: var(--muted); font-size: 12.5px; display: block; margin-top: 2px; }
+  ol.refs .date { color: var(--ok); font-family: var(--font-mono); font-size: 11.5px; }
+  sup a { font-family: var(--font-mono); font-size: 0.72em; text-decoration: none; padding: 0 1px; }
+  .foot {
+    margin-top: 34px;
+    color: var(--muted);
+    font-size: 13px;
+    font-family: var(--font-mono);
+  }
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <p class="eyebrow">Modo explicador · referencias 2026</p>
+    <h1>Validar una hipótesis con IA</h1>
+    <p class="lede">Cómo verificar una hipótesis (ya validada conceptualmente) contra sus requerimientos y restricciones usando como herramientas principales el <strong>código</strong>, el <strong>hardware en el lazo (HIL)</strong> y el <strong>humano en el lazo (HITL)</strong> — y cómo, cuando son varias, validar cada una y luego elegir entre ellas.</p>
+    <div class="meta">
+      <span><b>Dominio de ejemplo:</b> SDR / RF</span>
+      <span><b>Fecha:</b> 1 oct 2026</span>
+      <span><b>Fuentes:</b> 2025–2026, con enlace y fecha</span>
+    </div>
+  </header>
+
+  <h2><span class="num">00</span>El encuadre</h2>
+  <p>«Validar una hipótesis conceptualmente correcta» no es preguntarle a la IA si la idea es buena. Es <strong>comprobar si cumple un contrato</strong>: un conjunto de requerimientos (lo que debe lograr) y de restricciones (los límites normativos o de hardware que no puede violar). La IA no es el juez final de la verdad física; es el motor que estructura la comprobación, genera las pruebas y acelera las iteraciones, mientras la evidencia dura viene de ejecutar código, medir hardware y revisar un humano.</p>
+
+  <p>Las tres herramientas que el flujo pone en el centro se reparten el trabajo así:</p>
+  <div class="tools">
+    <div class="tool code">
+      <span class="tag">CÓDIGO</span>
+      <p>La IA traduce requisitos a scripts, simulaciones y pruebas ejecutables, y corre el bucle generar → ejecutar → probar → reparar. Es evidencia reproducible y barata.</p>
+    </div>
+    <div class="tool hil">
+      <span class="tag">HIL</span>
+      <p>Hardware en el lazo: el componente real responde en lazo cerrado a un entorno simulado en tiempo real. Es la evidencia que la simulación no puede dar.</p>
+    </div>
+    <div class="tool hitl">
+      <span class="tag">HITL</span>
+      <p>Humano en el lazo: fija el contrato, arbitra los compromisos, revisa lo que los chequeos automáticos no ven y firma la decisión.</p>
+    </div>
+  </div>
+  <p class="section-note">La literatura de 2026 converge en este reparto: un marco de manufactura inteligente con LLMs lo organiza explícitamente en módulos de LLM, sistemas ciberfísicos, un módulo HITL y un módulo de «verificación, validación y gestión de incertidumbre».<sup><a href="#r5">5</a></sup></p>
+
+  <h2><span class="num">01</span>Entrada verificable: convertir el contrato en algo comprobable</h2>
+  <p>Antes de validar nada hay que hacer la entrada <em>máquina-verificable</em>. La hipótesis llega en prosa; los requerimientos y restricciones hay que bajarlos a criterios con los que un script o una rúbrica puedan dar veredicto.</p>
+  <ol class="flow">
+    <li><b>Descomponer en criterios de aceptación</b><span>Cada requerimiento se reescribe como una afirmación comprobable con su umbral: p. ej. «ganancia del LNA ≥ 15&nbsp;dB a 2,4&nbsp;GHz», «figura de ruido ≤ 1,5&nbsp;dB», «emisiones fuera de banda bajo la máscara regulatoria». La IA ayuda a redactarlos, pero los umbrales los fija el humano.</span></li>
+    <li><b>Separar requisitos duros de blandos</b><span>Los duros son pass/fail numérico (los valida código/medida). Los blandos (p. ej. «cumple el espíritu de la norma») necesitan juicio con rúbrica y anclaje documental.</span></li>
+    <li><b>Anclar el contexto normativo (grounding / RAG)</b><span>Las restricciones normativas se cargan como documentos recuperables para que el modelo cite el texto exacto en vez de recordarlo de memoria; sin grounding, la comprobación de cumplimiento es la parte más propensa a alucinación.<sup><a href="#r3">3</a></sup></span></li>
+  </ol>
+
+  <h2><span class="num">02</span>Caso 1 — Una hipótesis contra su contrato</h2>
+  <p class="section-note">Entrada: una hipótesis + requerimientos + contexto (normativo, de hardware). Objetivo: un veredicto de cumplimiento con evidencia por cada criterio.</p>
+
+  <h3>Paso a paso del bucle de validación</h3>
+  <ol class="flow">
+    <li><b>Código: el bucle generar → ejecutar → probar → reparar</b><span>La IA reformula el diseño como una tarea de programación: genera scripts que corren el simulador o el modelo, ejecuta, observa el resultado frente a los criterios y repara. Los agentes de código auto-correctivos ejecutan el código en un entorno aislado porque «el código generado debe ejecutarse para verificar su corrección», e iteran sobre el fallo observado.<sup><a href="#r6">6</a></sup> En RF, un flujo con un LLM de frontera scripteaba CST, ADS y KiCad en vez de usar sus interfaces gráficas, lo que permitía «cientos de iteraciones simular-evaluar-modificar» y verificaba por construcción que esquemático y <em>layout</em> fueran idénticos al <em>netlist</em>.<sup><a href="#r4">4</a></sup></span></li>
+    <li><b>Verificar requisitos cuantitativos contra la simulación/medida</b><span>Cada criterio duro se contrasta con el número que produce la ejecución (ganancia, NF, estabilidad, BER). Aquí la IA no «opina»: compara salida medida contra umbral. Es verificación basada en referencia, el patrón más fiable de evaluación automática.<sup><a href="#r3">3</a></sup></span></li>
+    <li><b>Juzgar requisitos cualitativos / normativos con rúbrica (LLM-as-judge)</b><span>Para lo que no es un número (¿respeta la norma?, ¿la justificación es sólida?) se usa un LLM como juez con una rúbrica explícita, anclado en los documentos. Pero debe calibrarse: la guía de 2026 recomienda medir acuerdo con etiquetas humanas (Cohen's κ ≥ 0,6; ≥ 0,8 es fuerte) y controlar sesgos de posición, verbosidad y auto-preferencia.<sup><a href="#r1">1</a></sup></span></li>
+    <li><b>HIL cuando la restricción es de hardware</b><span>La simulación tiene un techo. HIL mete el componente real en un lazo cerrado con una planta simulada en tiempo real, y revela inestabilidades de realimentación y fallos de protección que una traza grabada no muestra «porque la propia salida del controlador cambia el sistema que mide».<sup><a href="#r7">7</a></sup> En SDR esto es la transición de IQ simulado a señal real sobre el radio.</span></li>
+    <li><b>HITL: revisión y arbitraje</b><span>El humano revisa lo que los chequeos automáticos no ven y arbitra los compromisos. En el flujo RF, la supervisión experta detectó idealizaciones de geometría de pistas e inconsistencias de enrutado que los chequeos automáticos pasaron por alto — «valor irreducible de la revisión humana».<sup><a href="#r4">4</a></sup></span></li>
+    <li><b>Registrar incertidumbre y evidencia</b><span>El veredicto por criterio se guarda con su evidencia y su nivel de confianza. Los protocolos de 2026 para «científicos de IA auditables» hacen explícito el ciclo hipótesis → prueba → evidencia → revisión de creencia, de modo que cada paso quede inspeccionable.<sup><a href="#r2">2</a></sup></span></li>
+  </ol>
+
+  <div class="callout">
+    <p class="label">La brecha a no olvidar</p>
+    <p>Un resultado «validado en simulación» no es «validado». El propio flujo RF con LLM advierte que sus resultados eran <strong>solo de simulación</strong>: la fabricación y la medición en hardware quedaban pendientes, «una brecha de validación significativa».<sup><a href="#r4">4</a></sup> Por eso el HIL y la medida física son el escalón que la IA sola no cubre.</p>
+  </div>
+
+  <h2><span class="num">03</span>Caso 2 — Varias hipótesis: validar cada una y luego elegir</h2>
+  <p class="section-note">Entrada: una lista de {hipótesis, requerimientos, contexto}. Objetivo: validar cada candidata y después contrastarlas para rankearlas o elegir una.</p>
+
+  <p>Se hace en dos tiempos. <strong>Primero</strong>, cada hipótesis pasa por el bucle del Caso 1 con la <em>misma rúbrica y los mismos umbrales</em> — la comparación solo es justa si todas se midieron con la misma vara. <strong>Después</strong>, se contrastan las que sobrevivieron (una candidata que viola una restricción dura queda descartada, no «penalizada»).</p>
+
+  <h3>Métodos para contrastar y elegir</h3>
+  <ol class="flow">
+    <li><b>Scoring multicriterio (MCDA)</b><span>Se puntúa cada candidata por criterio (rendimiento, coste, riesgo, margen normativo), con pesos acordados con el humano, y se agrega. Es transparente y auditable; existen marcos de 2026 que aplican exactamente este esquema para enrutar entre LLMs.<sup><a href="#r8">8</a></sup></span></li>
+    <li><b>Frontera de Pareto / trade-offs</b><span>Cuando los criterios compiten (precisión vs. consumo vs. coste), en vez de un solo ganador se expone el conjunto Pareto-óptimo y el humano elige el punto según sus prioridades. Evita esconder un compromiso real detrás de un único número.<sup><a href="#r8">8</a></sup></span></li>
+    <li><b>Comparación por pares (pairwise) — con cuidado</b><span>Pedir al modelo que compare dos candidatas suele concordar mejor con el humano que puntuar en abstracto,<sup><a href="#r1">1</a></sup> pero amplifica sesgos: un estudio de 2025 muestra que el formato pairwise «amplifica preferencias sesgadas», premia rasgos superficiales (verbosidad, tono) y a veces elige la respuesta que él mismo reconoce como peor. Mitigación: alternar el orden A/B–B/A y combinar razonamiento puntual con decisión por pares.<sup><a href="#r9">9</a></sup></span></li>
+    <li><b>Decisión final con HITL</b><span>El ranking es una recomendación, no la sentencia. El humano fija los pesos, resuelve empates y asume la responsabilidad de la elección; el marco de 2026 insiste en que «la experiencia humana asegura la precisión contextual y el control de calidad».<sup><a href="#r5">5</a></sup></span></li>
+  </ol>
+
+  <h2><span class="num">04</span>Dónde ayuda la IA y dónde hace falta verificación externa</h2>
+  <div class="split">
+    <div>
+      <h4 class="green">La IA acelera</h4>
+      <ul>
+        <li>Traducir requisitos a criterios y a código de prueba.</li>
+        <li>Correr muchas iteraciones simular-evaluar-reparar.</li>
+        <li>Recuperar y citar el texto normativo (grounding).</li>
+        <li>Puntuar lo cualitativo con rúbrica calibrada.</li>
+        <li>Agregar criterios y proponer un ranking inicial.</li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="amber">Verificación externa obligatoria</h4>
+      <ul>
+        <li><strong>Hardware (HIL/medida):</strong> lo físico no se valida en simulación.</li>
+        <li><strong>Datos reales:</strong> contra mediciones, no contra supuestos.</li>
+        <li><strong>Humano:</strong> umbrales, pesos, arbitraje y firma final.</li>
+        <li><strong>Calibración del juez:</strong> acuerdo con etiquetas humanas.</li>
+        <li><strong>Trazabilidad:</strong> cada veredicto con su evidencia.</li>
+      </ul>
+    </div>
+  </div>
+  <p>Regla práctica: la IA reduce el espacio y prepara la evidencia; la restricción dura la cierra el ejecutable o el hardware, y la decisión la cierra el humano.</p>
+
+  <div class="ref-wrap">
+    <h2 style="margin-top:20px"><span class="num">—</span>Referencias</h2>
+    <p class="section-note">Priorizadas 2025–2026. Cada afirmación del texto enlaza a su fuente; fechas comprobadas en la propia publicación.</p>
+    <ol class="refs">
+      <li id="r1">FutureAGI — «LLM-as-a-Judge in 2026: How It Works, When It Fails». <span class="date">publicado ene 2025, actualizado 27 ago 2026</span><span class="src">Rúbricas, calibración (Cohen's κ), sesgos de posición/verbosidad/auto-preferencia, pairwise vs. puntual. <a href="https://futureagi.com/blog/llm-as-a-judge/">futureagi.com/blog/llm-as-a-judge</a></span></li>
+      <li id="r2">Takahara &amp; Mizoguchi — «Toward Auditable AI Scientists: A Hypothesis Evolution Protocol for LLM Agents». <span class="date">arXiv:2607.09195 · 2026</span><span class="src">Ciclo auditable hipótesis → prueba → evidencia → revisión de creencia. <a href="https://arxiv.org/abs/2607.09195">arxiv.org/abs/2607.09195</a></span></li>
+      <li id="r3">Kulkarni et&nbsp;al. — «Scientific Hypothesis Generation and Validation: Methods, Datasets, and Future Directions». <span class="date">arXiv:2505.04651 · 6 may 2025</span><span class="src">Validación por simulación, colaboración humano-IA, causalidad y cuantificación de incertidumbre; verificación basada en referencia. <a href="https://arxiv.org/abs/2505.04651">arxiv.org/abs/2505.04651</a></span></li>
+      <li id="r4">Heinrichs et&nbsp;al. — «From Prompt to Prototype: Towards a Frontier LLM Driven RF Engineering Workflow». <span class="date">arXiv:2608.31006 · ago 2026</span><span class="src">Agente LLM scriptea CST/ADS/KiCad; cientos de iteraciones simular-evaluar-modificar; resultados solo de simulación (brecha de hardware); revisión humana irreducible. <a href="https://arxiv.org/abs/2608.31006">arxiv.org/abs/2608.31006</a></span></li>
+      <li id="r5">Sadeqi Bajestani, Mun &amp; Kim — «Human-in-the-loop and large language models in smart manufacturing». <em>Journal of Manufacturing Systems</em>, vol.&nbsp;86. <span class="date">jun 2026</span><span class="src">Marco con módulos LLM + sistemas ciberfísicos + HITL + verificación/validación e incertidumbre; riesgos de alucinación y brechas de validación. <a href="https://www.sciencedirect.com/science/article/pii/S0278612526001135">sciencedirect.com/science/article/pii/S0278612526001135</a></span></li>
+      <li id="r6">Modal — «Best Open Source Code LLMs for Self-Correcting AI Agents». <span class="date">2026</span><span class="src">Bucle generar-ejecutar-probar-reparar en sandbox; «el código generado debe ejecutarse para verificar su corrección». <a href="https://modal.com/resources/best-open-source-code-llms-self-correcting-ai-agents">modal.com/resources/best-open-source-code-llms-self-correcting-ai-agents</a></span></li>
+      <li id="r7">OPAL-RT — «A Guide to Hardware-in-the-Loop (HIL) Testing». <span class="date">publicado may 2025, actualizado 14 sep 2026</span><span class="src">Lazo cerrado controlador real + planta simulada en tiempo real; revela inestabilidad de realimentación que una traza grabada no muestra. <a href="https://www.opal-rt.com/blog/a-guide-to-hardware-in-the-loop-testing/">opal-rt.com/blog/a-guide-to-hardware-in-the-loop-testing</a></span></li>
+      <li id="r8">«A Multi-Criteria Decision Framework for Enterprise LLM Routing». <em>Information</em> 17(6):539. <span class="date">2025</span><span class="src">Scoring por criterios con pesos y trade-offs/Pareto como esquema de selección multicriterio. <a href="https://www.mdpi.com/2078-2489/17/6/539">mdpi.com/2078-2489/17/6/539</a></span></li>
+      <li id="r9">Jeong et&nbsp;al. — «The Comparative Trap: Pairwise Comparisons Amplify Biased Preferences of LLM Evaluators». 8th BlackboxNLP Workshop. <span class="date">nov 2025</span><span class="src">El formato pairwise amplifica sesgos superficiales; propone PREPAIR (razonamiento puntual + decisión por pares). <a href="https://aclanthology.org/2025.blackboxnlp-1.5.pdf">aclanthology.org/2025.blackboxnlp-1.5.pdf</a></span></li>
+    </ol>
+  </div>
+
+  <p class="foot">Modo 2 (explicador). Resumen de fuentes públicas 2025–2026; verifica umbrales y restricciones contra tus propias medidas y la normativa aplicable antes de decidir.</p>
+</div>
+
+</body></html>

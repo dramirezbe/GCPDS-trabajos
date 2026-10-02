@@ -1,0 +1,322 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Agentes y control de hardware</title>
+<style>
+/* Layout: columna de lectura única (~68ch), secciones apiladas con gap, acento "señal" sobre neutros fríos */
+:root{
+  --bg:#f5f6f8;
+  --surface:#ffffff;
+  --surface-2:#eef0f4;
+  --fg:#1a1f2b;
+  --muted:#5b6475;
+  --line:#d9dde6;
+  --accent:#0f8f7a;      /* verde señal */
+  --accent-2:#c2531a;    /* ámbar/actuador */
+  --warn:#b4531a;
+  --code-bg:#1b2130;
+  --code-fg:#dfe6f0;
+  --font-display:"Space Grotesk","Segoe UI",system-ui,sans-serif;
+  --font-body:"Inter",system-ui,-apple-system,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f131c;
+  --surface:#161c28;
+  --surface-2:#1d2432;
+  --fg:#e7ebf2;
+  --muted:#9aa4b7;
+  --line:#2a3446;
+  --accent:#3fd3b6;
+  --accent-2:#f0894b;
+  --warn:#f0a35a;
+  --code-bg:#0b0f17;
+  --code-fg:#dbe3ef;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f131c;--surface:#161c28;--surface-2:#1d2432;--fg:#e7ebf2;--muted:#9aa4b7;
+  --line:#2a3446;--accent:#3fd3b6;--accent-2:#f0894b;--warn:#f0a35a;--code-bg:#0b0f17;--code-fg:#dbe3ef;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.62;-webkit-font-smoothing:antialiased}
+.wrap{max-width:720px;margin:0 auto;padding-inline:20px;padding-block:0}
+header.hero{padding-block:56px 32px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--font-mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+h1{font-family:var(--font-display);font-weight:600;font-size:clamp(1.9rem,5.4vw,2.9rem);line-height:1.08;letter-spacing:-.02em;margin:0 0 18px;text-wrap:balance}
+.lede{font-size:1.12rem;color:var(--muted);margin:0;max-width:60ch}
+.meta{margin-top:22px;font-family:var(--font-mono);font-size:.76rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px 18px}
+.meta b{color:var(--fg);font-weight:500}
+main{padding-block:8px 56px}
+section{padding-block:38px;border-bottom:1px solid var(--line)}
+section:last-child{border-bottom:0}
+h2{font-family:var(--font-display);font-weight:600;font-size:1.5rem;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance;display:flex;gap:12px;align-items:baseline}
+h2 .n{font-family:var(--font-mono);font-size:.9rem;color:var(--accent);font-weight:500;flex:none}
+h3{font-family:var(--font-display);font-weight:600;font-size:1.08rem;margin:26px 0 8px;letter-spacing:-.01em}
+p{margin:0 0 14px}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
+a:hover{border-bottom-color:var(--accent)}
+strong{font-weight:600}
+.sub{color:var(--muted);margin:-2px 0 20px;max-width:62ch}
+ul,ol{margin:0 0 16px;padding-left:1.2em}
+li{margin:0 0 8px}
+li::marker{color:var(--accent)}
+code{font-family:var(--font-mono);font-size:.86em;background:var(--surface-2);padding:.1em .38em;border-radius:5px;border:1px solid var(--line)}
+pre{background:var(--code-bg);color:var(--code-fg);border-radius:12px;padding:18px 18px;overflow-x:auto;font-family:var(--font-mono);font-size:.82rem;line-height:1.55;margin:0 0 18px;border:1px solid color-mix(in srgb,var(--code-fg) 14%,transparent)}
+pre code{background:none;border:0;padding:0;color:inherit;font-size:inherit}
+.tok-k{color:#8ad6c6}.tok-s{color:#e6b06a}.tok-c{color:#6b7891;font-style:italic}.tok-p{color:#c58bd6}
+.callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;padding:16px 18px;margin:0 0 18px}
+.callout.warn{border-left-color:var(--warn)}
+.callout .tag{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:0 0 6px;font-weight:600}
+.callout.warn .tag{color:var(--warn)}
+.callout p:last-child{margin-bottom:0}
+figure{margin:24px 0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 14px 10px}
+figure svg{display:block;width:100%;height:auto}
+figcaption{font-size:.82rem;color:var(--muted);text-align:center;margin-top:8px;padding-inline:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:4px 0 18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 16px}
+.card h4{font-family:var(--font-display);font-size:1rem;margin:0 0 6px;display:flex;align-items:center;gap:8px}
+.card .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none}
+.card .dot.a2{background:var(--accent-2)}
+.card p{font-size:.92rem;color:var(--muted);margin:0}
+.checklist{list-style:none;padding:0;margin:0 0 10px}
+.checklist li{padding-left:28px;position:relative;margin-bottom:12px}
+.checklist li::before{content:"";position:absolute;left:0;top:.42em;width:14px;height:14px;border-radius:4px;border:2px solid var(--accent)}
+.checklist li::after{content:"";position:absolute;left:4px;top:.5em;width:5px;height:8px;border-right:2px solid var(--accent);border-bottom:2px solid var(--accent);transform:rotate(42deg)}
+.refs{list-style:none;padding:0;margin:0;counter-reset:r}
+.refs li{counter-increment:r;padding-left:34px;position:relative;margin-bottom:16px;font-size:.92rem}
+.refs li::before{content:counter(r);position:absolute;left:0;top:0;font-family:var(--font-mono);font-size:.78rem;color:var(--accent);background:var(--surface-2);border:1px solid var(--line);width:24px;height:24px;border-radius:6px;display:grid;place-items:center}
+.refs .date{font-family:var(--font-mono);font-size:.74rem;color:var(--muted);display:inline-block;margin-left:2px}
+.refs .src{color:var(--muted)}
+footer{padding-block:28px 48px;color:var(--muted);font-size:.82rem}
+footer p{margin:0 0 6px}
+@media (max-width:480px){header.hero{padding-block:40px 26px}h2{flex-direction:column;gap:2px}}
+</style>
+
+<div class="wrap">
+<header class="hero">
+  <p class="eyebrow">Modo explicador · Referencias 2025–2026</p>
+  <h1>Cómo se le da control de hardware a un agente con tools</h1>
+  <p class="lede">Un agente (un LLM dentro de un bucle) no toca el hardware directamente: lo hace a través de <em>tools</em> — funciones con un esquema claro que envuelven el driver o la API del dispositivo. Esta página recorre el patrón completo, con ejemplos de SDR, radar, robótica e instrumentación.</p>
+  <div class="meta">
+    <span><b>Patrón:</b> tool / function calling + MCP</span>
+    <span><b>Dominio:</b> SDR, ROS 2, lab, PLC/GPIO</span>
+    <span><b>Salvaguardas:</b> HITL + HIL</span>
+  </div>
+</header>
+
+<main>
+
+<section id="idea">
+  <h2><span class="n">01</span> La idea central</h2>
+  <p class="sub">Un LLM solo produce texto. Para que "mueva" algo físico hay que darle un repertorio de acciones ejecutables y un lazo que las ejecute por él.</p>
+  <p>El agente no habla con el hardware: habla con <strong>tools</strong>. Una tool es una función con nombre, descripción en lenguaje natural y un <strong>esquema de parámetros</strong> (JSON Schema). El modelo elige qué tool llamar y con qué argumentos; un componente externo (el cliente/host del agente, o un <strong>servidor MCP</strong>) ejecuta esa llamada contra el driver real y le devuelve el resultado.</p>
+  <p>Esto convierte "controlar hardware" en tres piezas: <strong>(1)</strong> envolver el dispositivo como tool, <strong>(2)</strong> cerrar el bucle percibir→decidir→actuar→medir, y <strong>(3)</strong> acotarlo con salvaguardas antes de que algo se mueva de verdad. El resto de la página es exactamente eso.</p>
+  <div class="callout">
+    <p class="tag">Modelo mental</p>
+    <p>El LLM es el planificador. Las tools son el sistema nervioso motor. El servidor/driver es el músculo. El sensor que devuelve lectura es la propiocepción. Sin esa realimentación, el agente actúa a ciegas.</p>
+  </div>
+</section>
+
+<section id="exponer">
+  <h2><span class="n">02</span> Paso 1 · Exponer el dispositivo como tool</h2>
+  <p class="sub">Function calling define el "qué puedo hacer"; MCP estandariza el "cómo se conecta" para no reescribir una integración por cada dispositivo.</p>
+
+  <h3>La definición de una tool</h3>
+  <p>Toda tool se declara con <code>name</code>, <code>description</code> y un <code>inputSchema</code> en JSON Schema que lista los parámetros, sus tipos y cuáles son obligatorios. El modelo usa la descripción y el esquema para decidir la llamada; la claridad del esquema es decisiva para que acierte. Esquema de una tool que ajusta un SDR tipo USRP:</p>
+<pre><code><span class="tok-p">{</span>
+  <span class="tok-s">"name"</span>: <span class="tok-s">"sdr_set_rx"</span>,
+  <span class="tok-s">"description"</span>: <span class="tok-s">"Configura el receptor del USRP: frecuencia central, tasa de muestreo y ganancia."</span>,
+  <span class="tok-s">"inputSchema"</span>: <span class="tok-p">{</span>
+    <span class="tok-s">"type"</span>: <span class="tok-s">"object"</span>,
+    <span class="tok-s">"properties"</span>: <span class="tok-p">{</span>
+      <span class="tok-s">"center_freq_hz"</span>: <span class="tok-p">{</span><span class="tok-s">"type"</span>:<span class="tok-s">"number"</span>, <span class="tok-s">"minimum"</span>:70e6, <span class="tok-s">"maximum"</span>:6e9<span class="tok-p">}</span>,
+      <span class="tok-s">"sample_rate_sps"</span>: <span class="tok-p">{</span><span class="tok-s">"type"</span>:<span class="tok-s">"number"</span>, <span class="tok-s">"maximum"</span>:56e6<span class="tok-p">}</span>,
+      <span class="tok-s">"gain_db"</span>: <span class="tok-p">{</span><span class="tok-s">"type"</span>:<span class="tok-s">"number"</span>, <span class="tok-s">"minimum"</span>:0, <span class="tok-s">"maximum"</span>:76<span class="tok-p">}</span>
+    <span class="tok-p">}</span>,
+    <span class="tok-s">"required"</span>: [<span class="tok-s">"center_freq_hz"</span>, <span class="tok-s">"sample_rate_sps"</span>]
+  <span class="tok-p">}</span>
+<span class="tok-p">}</span></code></pre>
+  <p>Fíjate que los <strong>límites físicos del dispositivo ya viven en el esquema</strong> (<code>minimum</code>/<code>maximum</code>). Es la primera línea de defensa: el modelo ve el rango válido, y el servidor rechaza lo que se salga de él. Los rangos del ejemplo corresponden al orden de magnitud de un USRP (sintonía de decenas de MHz a varios GHz, ganancia de RX hasta ~76 dB); consulta la hoja del equipo concreto antes de fijarlos.</p>
+
+  <h3>MCP: el conector estándar</h3>
+  <p>El <strong>Model Context Protocol</strong> (MCP) estandariza esa capa con una arquitectura cliente–servidor sobre JSON-RPC. El cliente pide el catálogo con <code>tools/list</code>, el modelo elige, y el cliente ejecuta con <code>tools/call</code>; la respuesta vuelve en un campo <code>content</code> estructurado, con <code>isError</code> para fallos. Un <strong>servidor MCP</strong> no es más que un proceso que envuelve tu driver o la API del dispositivo y publica esas tools. Así, el mismo SDR —o robot, o instrumento— queda disponible para cualquier agente compatible (Claude, GPT, Gemini…) sin integración a medida. <a href="https://modelcontextprotocol.io/specification/2025-06-18/server/tools">La especificación MCP (rev. 2025-06-18)</a> describe exactamente este flujo.</p>
+  <div class="callout">
+    <p class="tag">Caso real · robótica</p>
+    <p>El <a href="https://discourse.openrobotics.org/t/ros-mcp-server-release/50024">ROS MCP Server</a> (lanzado el 11 sep 2025) expone <strong>topics, services y actions</strong> de ROS 1 y 2 como tools, permitiendo controlar robots existentes "en lenguaje natural, sin cambiar el código del robot". Es el patrón envoltorio-sobre-driver aplicado a robótica.</p>
+  </div>
+</section>
+
+<section id="bucle">
+  <h2><span class="n">03</span> Paso 2 · El bucle agente → actuador → sensor</h2>
+  <p class="sub">Controlar hardware es inherentemente cerrado: cada acción cambia el mundo físico y hay que volver a medir para decidir la siguiente.</p>
+
+  <figure>
+    <svg viewBox="0 0 680 300" role="img" aria-label="Diagrama del bucle cerrado entre agente, tools, actuador, mundo físico y sensor">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+        </marker>
+        <marker id="ar2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="var(--accent-2)"/>
+        </marker>
+      </defs>
+      <!-- nodos -->
+      <g font-family="var(--font-display)" font-size="14" font-weight="600" text-anchor="middle">
+        <rect x="20" y="36" width="150" height="56" rx="12" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="95" y="60" fill="var(--fg)">Agente (LLM)</text>
+        <text x="95" y="79" fill="var(--muted)" font-size="11" font-weight="400">planifica</text>
+
+        <rect x="265" y="36" width="150" height="56" rx="12" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="340" y="60" fill="var(--fg)">Tool / MCP</text>
+        <text x="340" y="79" fill="var(--muted)" font-size="11" font-weight="400">valida y ejecuta</text>
+
+        <rect x="510" y="36" width="150" height="56" rx="12" fill="var(--surface-2)" stroke="var(--accent-2)" stroke-width="1.5"/>
+        <text x="585" y="60" fill="var(--fg)">Actuador</text>
+        <text x="585" y="79" fill="var(--muted)" font-size="11" font-weight="400">driver / HW</text>
+
+        <rect x="510" y="208" width="150" height="56" rx="12" fill="var(--surface-2)" stroke="var(--accent-2)" stroke-width="1.5"/>
+        <text x="585" y="232" fill="var(--fg)">Mundo físico</text>
+        <text x="585" y="251" fill="var(--muted)" font-size="11" font-weight="400">RF, movimiento…</text>
+
+        <rect x="265" y="208" width="150" height="56" rx="12" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="340" y="232" fill="var(--fg)">Sensor</text>
+        <text x="340" y="251" fill="var(--muted)" font-size="11" font-weight="400">mide estado</text>
+
+        <rect x="20" y="208" width="150" height="56" rx="12" fill="var(--surface-2)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="95" y="232" fill="var(--fg)">Feedback</text>
+        <text x="95" y="251" fill="var(--muted)" font-size="11" font-weight="400">al contexto</text>
+      </g>
+      <!-- flechas -->
+      <g stroke-width="2" fill="none">
+        <line x1="170" y1="64" x2="258" y2="64" stroke="var(--accent)" marker-end="url(#ar)"/>
+        <line x1="415" y1="64" x2="503" y2="64" stroke="var(--accent-2)" marker-end="url(#ar2)"/>
+        <line x1="585" y1="92" x2="585" y2="202" stroke="var(--accent-2)" marker-end="url(#ar2)"/>
+        <line x1="510" y1="236" x2="418" y2="236" stroke="var(--accent)" marker-end="url(#ar)"/>
+        <line x1="265" y1="236" x2="173" y2="236" stroke="var(--accent)" marker-end="url(#ar)"/>
+        <line x1="95" y1="202" x2="95" y2="95" stroke="var(--accent)" marker-end="url(#ar)"/>
+      </g>
+      <g font-family="var(--font-mono)" font-size="10.5" fill="var(--muted)" text-anchor="middle">
+        <text x="214" y="52">tools/call</text>
+        <text x="459" y="52">comando</text>
+        <text x="463" y="236">lectura</text>
+      </g>
+    </svg>
+    <figcaption>El lazo cerrado: el agente llama una tool, el servidor valida y actúa, el sensor mide el efecto, y la lectura vuelve al contexto del modelo para la siguiente decisión.</figcaption>
+  </figure>
+
+  <p>En la práctica el modelo recibe la lectura del sensor como resultado de la tool y razona sobre ella: subió ganancia, ¿el SNR mejoró o saturó el ADC? Este ciclo es lo que distingue a un <strong>agente</strong> (itera con realimentación) de una simple llamada de función aislada. Un trabajo relacionado, el <a href="https://arxiv.org/abs/2511.03497">ROSBag MCP Server</a> (nov 2025), muestra el lado de la percepción: tools que dan al LLM acceso a datos de robot (trayectorias, LiDAR) que de otro modo no cabrían en su contexto, y señala que la <strong>claridad del esquema y el número de tools</strong> correlacionan directamente con la tasa de acierto.</p>
+</section>
+
+<section id="salvaguardas">
+  <h2><span class="n">04</span> Paso 3 · HITL y HIL como salvaguarda</h2>
+  <p class="sub">Antes de accionar hardware de verdad conviene interponer un humano y/o un entorno de prueba. Son dos barreras distintas y complementarias.</p>
+
+  <div class="grid">
+    <div class="card">
+      <h4><span class="dot"></span>HITL — Human in the loop</h4>
+      <p>Una persona aprueba (o deniega) la acción antes de que se ejecute. La propia especificación MCP recomienda que "<em>siempre debería haber un humano en el lazo con capacidad de denegar invocaciones de tools</em>", con confirmaciones visibles para operaciones sensibles.</p>
+    </div>
+    <div class="card">
+      <h4><span class="dot a2"></span>HIL — Hardware in the loop</h4>
+      <p>El comando se prueba primero contra el hardware real (o un gemelo digital/simulador) en un banco controlado, no sobre el sistema en producción. Permite validar millones de combinaciones de forma segura antes del despliegue.</p>
+    </div>
+  </div>
+
+  <p>La distinción importa: <strong>HITL</strong> es una barrera de <em>autorización</em> (¿debe esto ejecutarse?), mientras que <strong>HIL</strong> es una barrera de <em>validación</em> (¿funciona y es seguro en un banco antes de salir a campo?). Muchos sistemas fiables usan las dos. Un patrón común en tools es marcar las que son destructivas o irreversibles (anotaciones de la tool) para que el host exija confirmación humana explícita solo en esas.</p>
+
+  <div class="callout warn">
+    <p class="tag">Por qué no basta con el LLM</p>
+    <p>El análisis <a href="https://semiengineering.com/llms-add-safety-risks-to-physical-ai/">"LLMs Add Safety Risks to Physical AI"</a> (6 nov 2025) documenta por qué: salida no determinista ("para el mismo prompt no obtengo exactamente la misma respuesta"), alucinaciones, y fallos por cambio de dominio. Cita un robot de ajedrez que fracturó el dedo de un niño al moverse antes de tiempo. La conclusión recurrente: la supervisión humana y los límites en tiempo de ejecución siguen siendo imprescindibles.</p>
+  </div>
+</section>
+
+<section id="fiabilidad">
+  <h2><span class="n">05</span> Estado, seguridad, latencia y fallos</h2>
+  <p class="sub">El hardware real tiene problemas que el software puro no: el estado persiste, los comandos tardan, y las cosas se rompen a mitad de una acción.</p>
+
+  <h3>Gestión de estado</h3>
+  <p>A diferencia de una API sin estado, un actuador recuerda lo último que le pediste: el USRP sigue sintonizado, el brazo sigue en la última pose. El servidor de tools debe exponer tools de <strong>lectura</strong> (<code>sdr_get_state</code>) para que el agente no asuma el estado, e idealmente ser idempotente donde se pueda. "Fijar frecuencia a X" es más seguro que "subir 1 MHz", porque lo segundo depende de un estado que el modelo quizá no conoce.</p>
+
+  <h3>Latencia y tiempo real</h3>
+  <p>Un LLM razona en cientos de milisegundos o segundos; muchos lazos físicos (control de potencia RF, estabilización de un dron) exigen microsegundos. El patrón habitual es de <strong>dos niveles</strong>: el agente fija objetivos y parámetros de alto nivel ("busca la portadora en esta banda y sintonízala"), y un controlador determinista de bajo nivel —en el firmware o el driver— cierra el lazo rápido. El agente supervisa; no sustituye al control en tiempo real.</p>
+
+  <h3>Manejo de fallos</h3>
+  <p>MCP separa errores de protocolo (tool inexistente, argumentos inválidos) de errores de ejecución (<code>isError: true</code> en el resultado: fallo del dispositivo, timeout, límite excedido). El servidor <strong>debe</strong> validar toda entrada, aplicar control de acceso, limitar la tasa de invocaciones y poner timeouts. Un buen mensaje de error devuelve al agente qué pasó y cómo corregir, no solo "falló".</p>
+</section>
+
+<section id="acotar">
+  <h2><span class="n">06</span> Cómo acotarlo para que sea fiable</h2>
+  <p class="sub">La fiabilidad no sale del modelo, sale de la capa de tools que lo rodea. Estas son las defensas que se combinan.</p>
+
+  <ul class="checklist">
+    <li><strong>Límites físicos en el esquema.</strong> Codifica rangos válidos (<code>minimum</code>/<code>maximum</code>, enums) en el JSON Schema de cada parámetro, y vuelve a validarlos en el servidor. El modelo nunca debería poder pedir una ganancia de 500 dB.</li>
+    <li><strong>Validación de comandos en el servidor.</strong> No confíes en que el modelo respete el esquema: revalida todo en el envoltorio del driver, con control de acceso y rate limiting. El esquema guía; el servidor hace cumplir.</li>
+    <li><strong>Dry-run / modo simulación.</strong> Ofrece una tool que calcula y devuelve lo que <em>haría</em> sin accionar, o apunta el agente a un simulador/gemelo digital. El <a href="https://arxiv.org/pdf/2511.05912">RadioSim Agent</a> (2025) es un buen ejemplo del espíritu dry-run: un agente que opera un simulador electromagnético determinista por function calling (tools como <code>simulate_radio_environment()</code>) en lugar de transmitir por hardware. Útil para probar el plan antes de tocar RF real.</li>
+    <li><strong>Confirmación humana en acciones irreversibles.</strong> Marca como sensibles las tools que transmiten potencia, mueven masa o no se pueden deshacer, y exige aprobación HITL antes de ejecutarlas.</li>
+    <li><strong>Lecturas antes y después.</strong> Haz que el agente lea el estado antes de actuar y verifique el efecto después; convierte un comando a ciegas en un lazo verificado.</li>
+    <li><strong>Catálogo acotado.</strong> Expón solo las tools necesarias con descripciones nítidas: menos tools y esquemas claros elevan la tasa de acierto (hallazgo del ROSBag MCP Server).</li>
+  </ul>
+  <div class="callout">
+    <p class="tag">Regla práctica</p>
+    <p>Trata al agente como a un operador capaz pero falible al que le das una consola con topes mecánicos: puede hacer su trabajo con libertad, pero la consola física le impide pedir lo imposible y un supervisor firma lo irreversible.</p>
+  </div>
+</section>
+
+<section id="ejemplos">
+  <h2><span class="n">07</span> Ejemplos por dominio</h2>
+  <p class="sub">El mismo patrón —driver envuelto como tools con límites, bucle cerrado y salvaguardas— se instancia en cada dominio.</p>
+  <div class="grid">
+    <div class="card">
+      <h4><span class="dot a2"></span>SDR / radio (USRP)</h4>
+      <p>Tools sobre el driver UHD: <code>set_rx/tx</code> (frecuencia, tasa, ganancia, antena), <code>capture_iq</code>, <code>get_state</code>. Límites de banda y potencia en el esquema; transmisión marcada como sensible (HITL), porque emitir RF tiene implicaciones legales y de interferencia.</p>
+    </div>
+    <div class="card">
+      <h4><span class="dot a2"></span>Radar cognitivo</h4>
+      <p>Investigación de 2026 explora agentes de lenguaje que condicionan la forma de onda del radar: <a href="https://arxiv.org/abs/2608.11596">"Small Language Model enabled Autonomous agent for Language-Conditioned Cognitive Radar"</a> (ago 2026) apunta justo a traducir intención en lenguaje a parámetros de sensado.</p>
+    </div>
+    <div class="card">
+      <h4><span class="dot"></span>Robótica (ROS 2)</h4>
+      <p>El <a href="https://discourse.openrobotics.org/t/ros-mcp-server-release/50024">ROS MCP Server</a> expone topics/services/actions. El agente publica objetivos de navegación o pose; controladores ROS deterministas cierran el lazo rápido.</p>
+    </div>
+    <div class="card">
+      <h4><span class="dot"></span>Instrumentos de lab</h4>
+      <p>Osciloscopios, generadores y fuentes vía SCPI/VISA envueltos como tools (<code>set_voltage</code> con tope, <code>measure</code>). Lectura-después-de-escritura para confirmar cada ajuste.</p>
+    </div>
+    <div class="card">
+      <h4><span class="dot a2"></span>GPIO / PLC</h4>
+      <p>Pines o relés como tools discretas con enums de estado. Los PLC ya aportan enclavamientos de seguridad; el agente opera por encima de ellos, nunca los puentea.</p>
+    </div>
+    <div class="card">
+      <h4><span class="dot"></span>Manufactura</h4>
+      <p>Revisiones de 2026 sobre <a href="https://www.sciencedirect.com/science/article/pii/S0278612526001135">HITL + LLM en manufactura inteligente</a> sitúan la aprobación humana como pieza central del despliegue seguro en planta.</p>
+    </div>
+  </div>
+</section>
+
+<section id="refs">
+  <h2><span class="n">08</span> Referencias</h2>
+  <p class="sub">Priorizadas por recencia (2025–2026). Cada afirmación del texto enlaza a su fuente; aquí están con fecha verificada.</p>
+  <ol class="refs">
+    <li><a href="https://modelcontextprotocol.io/specification/2025-06-18/server/tools">Model Context Protocol — Server Tools (especificación)</a> <span class="date">rev. 2025-06-18</span><br><span class="src">Define la estructura de una tool (name, description, inputSchema en JSON Schema, annotations), el flujo tools/list → tools/call, el manejo de errores y la recomendación explícita de human-in-the-loop.</span></li>
+    <li><a href="https://discourse.openrobotics.org/t/ros-mcp-server-release/50024">ROS MCP Server Release — Open Robotics Discourse</a> <span class="date">11 sep 2025</span><br><span class="src">Servidor MCP que expone topics, services y actions de ROS 1/2 como tools para control de robots en lenguaje natural sin modificar su código.</span></li>
+    <li><a href="https://arxiv.org/abs/2511.03497">ROSBag MCP Server: Analyzing Robot Data with LLMs for Agentic Embodied AI (arXiv 2511.03497)</a> <span class="date">nov 2025</span><br><span class="src">Tools MCP para datos de robot; evidencia de que claridad de esquema, complejidad de parámetros y número de tools determinan la tasa de acierto del agente.</span></li>
+    <li><a href="https://arxiv.org/pdf/2511.05912">RadioSim Agent: LLMs + simuladores electromagnéticos deterministas (arXiv 2511.05912)</a> <span class="date">2025</span><br><span class="src">Agente que opera un simulador de propagación por function calling. Ejemplo del espíritu "dry-run": automatizar simulación, no transmitir por hardware real.</span></li>
+    <li><a href="https://semiengineering.com/llms-add-safety-risks-to-physical-ai/">LLMs Add Safety Risks To Physical AI — Semiconductor Engineering</a> <span class="date">6 nov 2025</span><br><span class="src">Riesgos de usar LLMs para accionar hardware (no determinismo, alucinación, cambio de dominio) y salvaguardas: guardrails en runtime, gemelos digitales, co-verificación y supervisión humana.</span></li>
+    <li><a href="https://arxiv.org/abs/2608.11596">Small Language Model enabled Autonomous agent for Language-Conditioned Cognitive Radar (arXiv 2608.11596)</a> <span class="date">ago 2026</span><br><span class="src">Agente de lenguaje que condiciona el sensado de un radar cognitivo; dominio directamente afín a SDR/RF. Citada por título y resumen del listado arXiv.</span></li>
+    <li><a href="https://www.sciencedirect.com/science/article/pii/S0278612526001135">Human-in-the-loop and LLMs in smart manufacturing — ScienceDirect</a> <span class="date">2026</span><br><span class="src">Revisión de aplicaciones, retos y perspectivas de HITL + LLM en manufactura; refuerza el papel de la aprobación humana en despliegues físicos.</span></li>
+  </ol>
+  <div class="callout">
+    <p class="tag">Nota de honestidad</p>
+    <p>El control de hardware físico directo por agentes LLM en 2026 vive sobre todo en investigación, prototipos y entornos de simulación/HIL, no en despliegues de producción no supervisados. Donde una afirmación no tiene una fuente reciente sólida, el texto se queda en el patrón general en lugar de inventar un caso.</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="wrap">
+  <p>Preparado en modo explicador · referencias verificadas a 1 oct 2026.</p>
+  <p>Definiciones usadas: <strong>SDR</strong> software defined radio · <strong>HITL</strong> human in the loop · <strong>HIL</strong> hardware in the loop · <strong>SOTA</strong> state of the art.</p>
+</footer>
+</div>
+
+</body></html>

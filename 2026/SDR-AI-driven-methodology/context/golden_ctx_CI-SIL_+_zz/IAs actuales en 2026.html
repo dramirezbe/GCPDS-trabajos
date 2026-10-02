@@ -1,0 +1,368 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>IAs actuales en 2026</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  /* Layout: una sola columna editorial de lectura (~68ch), con fichas y tablas a ancho completo dentro del marco. */
+  :root{
+    --bg:#f6f4ef;
+    --surface:#fffdf9;
+    --fg:#1c1b18;
+    --muted:#5e5b52;
+    --line:#e2ddd1;
+    --accent:#b4502a;      /* terracota quemada, usada con moderación */
+    --accent-soft:#f0e3dc;
+    --ink-code:#2a2822;
+    --good:#2f6a44;
+    --warn:#9a6a12;
+    --crit:#a23a2d;
+    --font-display:"Fraunces","Iowan Old Style",Georgia,serif;
+    --font-body:"Newsreader","Iowan Old Style",Georgia,serif;
+    --font-ui:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+    --font-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){ /* fin tokens base */
+    :root:not([data-theme="light"]){
+      --bg:#17161320;--bg:#151411;--surface:#1e1d19;--fg:#eceae3;--muted:#a6a193;
+      --line:#302e28;--accent:#e08457;--accent-soft:#2c2019;
+      --ink-code:#ebe8df;--good:#7fc096;--warn:#dcae5a;--crit:#e0806f;
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#151411;--surface:#1e1d19;--fg:#eceae3;--muted:#a6a193;
+    --line:#302e28;--accent:#e08457;--accent-soft:#2c2019;
+    --ink-code:#ebe8df;--good:#7fc096;--warn:#dcae5a;--crit:#e0806f;
+    color-scheme:dark;
+  }
+
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--fg);font-family:var(--font-body);
+    font-size:1.0625rem;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:720px;margin:0 auto;padding-inline:20px;padding-block:0}
+
+  /* Cabecera */
+  header.masthead{padding-block:56px 30px;border-bottom:2px solid var(--fg)}
+  .eyebrow{font-family:var(--font-ui);font-size:.72rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent);font-weight:600;margin:0 0 14px}
+  h1{font-family:var(--font-display);font-weight:900;font-size:clamp(2.1rem,6vw,3.4rem);
+    line-height:1.02;letter-spacing:-.02em;text-wrap:balance;margin:0 0 .5em}
+  .standfirst{font-size:1.18rem;color:var(--muted);max-width:60ch;margin:0}
+  .meta{font-family:var(--font-ui);font-size:.8rem;color:var(--muted);
+    margin-top:22px;display:flex;flex-wrap:wrap;gap:8px 18px}
+  .meta b{color:var(--fg);font-weight:600}
+
+  /* Aviso de método */
+  .method{background:var(--accent-soft);border:1px solid var(--line);
+    border-left:3px solid var(--accent);border-radius:6px;padding:16px 18px;
+    margin-block:28px;font-family:var(--font-ui);font-size:.9rem;line-height:1.5}
+  .method b{font-weight:600}
+
+  section{padding-block:34px;border-top:1px solid var(--line)}
+  .kicker{font-family:var(--font-ui);font-size:.74rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--accent);font-weight:600;margin:0 0 6px}
+  h2{font-family:var(--font-display);font-weight:600;font-size:clamp(1.5rem,3.6vw,2rem);
+    line-height:1.12;letter-spacing:-.01em;text-wrap:balance;margin:0 0 .55em}
+  h3{font-family:var(--font-ui);font-weight:600;font-size:1.08rem;
+    margin:1.6em 0 .4em;color:var(--fg)}
+  p{margin:0 0 1.05em}
+  a{color:var(--accent);text-underline-offset:2px}
+  strong{font-weight:600}
+  ul,ol{margin:0 0 1.1em;padding-left:1.25em}
+  li{margin-bottom:.5em}
+  .lead{font-size:1.12rem}
+
+  code{font-family:var(--font-mono);font-size:.86em;background:var(--accent-soft);
+    padding:.1em .38em;border-radius:4px;color:var(--ink-code)}
+
+  /* Fichas comparativas */
+  .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:8px 0 18px}
+  @media(max-width:520px){.cards{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:8px;
+    padding:16px 16px;min-width:0}
+  .card .t{font-family:var(--font-ui);font-weight:600;font-size:.98rem;margin:0 0 4px}
+  .card .d{font-size:.95rem;color:var(--muted);margin:0}
+  .card .tag{display:inline-block;font-family:var(--font-ui);font-size:.68rem;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--accent);
+    border:1px solid var(--line);border-radius:999px;padding:1px 8px;margin-bottom:9px}
+
+  /* Entrada / salida */
+  .io{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:6px 0 16px}
+  @media(max-width:520px){.io{grid-template-columns:1fr}}
+  .io .col{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;min-width:0}
+  .io h4{font-family:var(--font-ui);font-size:.78rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--accent);margin:0 0 8px;font-weight:600}
+  .io ul{margin:0;padding-left:1.1em;font-size:.95rem}
+
+  /* Tabla de problemas */
+  .tablewrap{overflow-x:auto;margin:10px 0 18px;border:1px solid var(--line);border-radius:8px}
+  table{border-collapse:collapse;width:100%;font-family:var(--font-ui);font-size:.9rem;min-width:460px}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--surface);font-weight:600;font-size:.76rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  tr:last-child td{border-bottom:none}
+  td b{font-weight:600}
+
+  .pill{display:inline-block;font-family:var(--font-ui);font-size:.7rem;font-weight:600;
+    padding:1px 8px;border-radius:999px;letter-spacing:.03em}
+  .pill.g{background:color-mix(in srgb,var(--good) 16%,transparent);color:var(--good)}
+  .pill.w{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+  .pill.c{background:color-mix(in srgb,var(--crit) 16%,transparent);color:var(--crit)}
+
+  /* Datos destacados */
+  .stat{display:flex;gap:16px;align-items:baseline;background:var(--surface);
+    border:1px solid var(--line);border-left:3px solid var(--accent);
+    border-radius:6px;padding:14px 16px;margin:14px 0}
+  .stat .n{font-family:var(--font-display);font-weight:900;font-size:1.9rem;
+    color:var(--accent);line-height:1;font-variant-numeric:tabular-nums;flex-shrink:0}
+  .stat .x{font-family:var(--font-ui);font-size:.9rem;color:var(--muted);line-height:1.4}
+
+  sup a{font-family:var(--font-ui);font-weight:600;text-decoration:none;font-size:.7em;
+    padding:0 1px}
+
+  /* Fuentes */
+  .sources{padding-bottom:70px}
+  .src{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:12px 0;
+    border-bottom:1px solid var(--line);font-family:var(--font-ui);font-size:.9rem}
+  .src .num{color:var(--accent);font-weight:600;font-variant-numeric:tabular-nums}
+  .src .body{min-width:0}
+  .src .ttl{font-weight:500;color:var(--fg)}
+  .src a{word-break:break-word}
+  .src .when{display:inline-block;margin-left:6px;font-size:.76rem;color:var(--muted);
+    border:1px solid var(--line);border-radius:999px;padding:0 7px}
+  footer{font-family:var(--font-ui);font-size:.8rem;color:var(--muted);
+    padding-block:24px 60px;border-top:1px solid var(--line)}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Panorámica técnica · octubre 2026</p>
+  <h1>Cómo funcionan las IAs actuales</h1>
+  <p class="standfirst">Agentes, chats, herramientas y skills: qué son, cómo se comportan, cómo se guían, qué falla y cómo acotarlas para que varíen menos. Con fuentes de 2026 para verificar cada punto.</p>
+  <div class="meta">
+    <span><b>Enfoque:</b> explicativo, sin juicio crítico</span>
+    <span><b>Ventana temporal:</b> publicaciones de 2026</span>
+    <span><b>Verificado:</b> fechas comprobadas en la fuente</span>
+  </div>
+</header>
+
+<div class="method">
+  <b>Nota de método.</b> Prioricé material publicado en 2026 (revistas, arXiv, blogs de laboratorios y foros técnicos) y comprobé la fecha dentro de cada fuente antes de citarla. Donde un concepto solo tiene base sólida en trabajo anterior, lo digo en el texto. Las afirmaciones cuantitativas llevan su fuente numerada entre corchetes; la lista completa con fechas está al final.
+</div>
+
+<section>
+  <p class="kicker">Punto de partida</p>
+  <h2>Un modelo, tres formas de usarlo</h2>
+  <p class="lead">Lo que hoy llamamos «una IA» es casi siempre un <strong>modelo de lenguaje grande</strong> (LLM): una red que, dado un texto, predice el siguiente fragmento (token) una y otra vez. Esa única capacidad se envuelve en tres modos de uso que conviene no confundir, porque sus garantías y sus fallos son distintos.</p>
+
+  <div class="cards">
+    <div class="card">
+      <span class="tag">Modo 1</span>
+      <p class="t">Chat</p>
+      <p class="d">Un turno de pregunta–respuesta. El modelo recibe tu mensaje más el historial y devuelve texto. No actúa sobre el mundo: solo escribe.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Modo 2</span>
+      <p class="t">Tools / function calling</p>
+      <p class="d">Al modelo se le ofrecen funciones (buscar, consultar una API, ejecutar código). Él decide cuándo llamarlas y con qué argumentos; un sistema externo las ejecuta y le devuelve el resultado.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Modo 3</span>
+      <p class="t">Agente</p>
+      <p class="d">Un bucle: el modelo planifica, llama herramientas, lee el resultado, vuelve a decidir, y repite hasta cumplir un objetivo de varios pasos. El chat es un turno; el agente es una trayectoria.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Capa</span>
+      <p class="t">Skills</p>
+      <p class="d">Paquetes de instrucciones y recursos reutilizables (un procedimiento, una plantilla, un conjunto de herramientas) que se cargan solo cuando la tarea los pide, para no saturar el contexto.</p>
+    </div>
+  </div>
+
+  <p>La investigación de 2026 marca precisamente ese salto del chat al agente como el cambio de fondo del campo: el problema ya no es «¿elige bien una sola llamada a una herramienta?», sino «¿orquesta varias herramientas a lo largo de una trayectoria larga, con estado intermedio, entorno cambiante y restricciones de coste, seguridad y verificabilidad?».<sup><a href="#f1">1</a></sup></p>
+</section>
+
+<section>
+  <p class="kicker">Qué entra y qué sale</p>
+  <h2>Entradas y salidas</h2>
+  <p>Todo lo que «sabe» el modelo en un momento dado cabe en su <strong>ventana de contexto</strong>: el texto que le pasas en esa llamada. No tiene memoria persistente entre llamadas salvo que se la construyas tú (guardando y reinyectando información).</p>
+  <div class="io">
+    <div class="col">
+      <h4>Entrada (contexto)</h4>
+      <ul>
+        <li><strong>System prompt:</strong> instrucciones de rol y reglas permanentes.</li>
+        <li><strong>Mensajes del usuario</strong> e historial de la conversación.</li>
+        <li><strong>Documentos recuperados</strong> (RAG) o datos pegados.</li>
+        <li><strong>Definiciones de herramientas</strong> y resultados de llamadas previas.</li>
+        <li><strong>Imágenes, audio o archivos</strong> en modelos multimodales.</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h4>Salida</h4>
+      <ul>
+        <li><strong>Texto</strong> libre (la respuesta).</li>
+        <li><strong>Llamadas a herramientas</strong> estructuradas (nombre + argumentos en JSON).</li>
+        <li><strong>Salida estructurada:</strong> JSON que cumple un esquema fijado de antemano.</li>
+        <li><strong>Trazas de razonamiento</strong> intermedias en modelos que «piensan» antes de responder.</li>
+      </ul>
+    </div>
+  </div>
+  <p>El tamaño de la ventana ha crecido mucho, pero más contexto no es gratis: ver la sección de problemas.</p>
+</section>
+
+<section>
+  <p class="kicker">El estándar que los conecta</p>
+  <h2>Herramientas y skills, hoy</h2>
+  <p>Para que un agente use herramientas externas sin integraciones a medida, en 2026 se ha consolidado el <strong>Model Context Protocol (MCP)</strong>: un protocolo abierto que expone herramientas, datos y «prompts» a cualquier modelo compatible, pensado como el «conector universal» entre agentes y sistemas.<sup><a href="#f2">2</a></sup> Su especificación tuvo una revisión relevante con fecha 28 de julio de 2026.<sup><a href="#f3">3</a></sup></p>
+  <p>Las <strong>skills</strong> son la otra mitad: en lugar de meter todas las instrucciones y herramientas en cada petición, se empaquetan por tarea y se cargan bajo demanda. Esto conecta con el hallazgo central del diseño de agentes de 2026 —la calidad depende menos del «prompt perfecto» y más de <em>qué</em> información está presente en el contexto y en qué momento.</p>
+</section>
+
+<section>
+  <p class="kicker">Cómo se comportan</p>
+  <h2>Comportamientos típicos</h2>
+  <ul>
+    <li><strong>Son probabilísticos, no deterministas.</strong> La misma pregunta puede dar respuestas distintas; incluso a «temperatura 0» hay fuentes de aleatoriedad residual, algo que en 2026 se ha intentado caracterizar formalmente (la «temperatura de fondo» oculta de los modelos).<sup><a href="#f4">4</a></sup></li>
+    <li><strong>Prefieren responder a abstenerse.</strong> Optimizados para parecer útiles y fluidos, tienden a dar una respuesta confiada antes que decir «no lo sé» —raíz de buena parte de las alucinaciones (ver abajo).<sup><a href="#f5">5</a></sup></li>
+    <li><strong>Son sensibles al formato del contexto.</strong> El orden, la longitud y la redacción del prompt cambian el resultado de forma a veces desproporcionada.</li>
+    <li><strong>Se degradan en trayectorias largas.</strong> Cuantos más pasos encadena un agente, más probabilidad acumulada de error; el rendimiento no se mantiene estable a lo largo de una sesión larga.<sup><a href="#f6">6</a></sup></li>
+    <li><strong>Imitan patrones, no verifican hechos.</strong> Reproducen regularidades del entrenamiento; los datos poco frecuentes o «de una sola aparición» son los más propensos a error.<sup><a href="#f5">5</a></sup></li>
+  </ul>
+</section>
+
+<section>
+  <p class="kicker">Cómo guiarlas</p>
+  <h2>De «prompt engineering» a «context engineering»</h2>
+  <p>El consenso de 2026 es que escribir un buen prompt ya no basta: lo que importa es <strong>ingeniería de contexto</strong>, es decir, diseñar el conjunto completo de información (instrucciones, datos, herramientas, memoria, resultados previos) que el modelo ve en cada paso.<sup><a href="#f7">7</a></sup> Las palancas principales:</p>
+  <h3>System prompt</h3>
+  <p>Fija rol, reglas y límites estables. Es el lugar de las restricciones que deben valer siempre (tono, formato, qué no hacer).</p>
+  <h3>Prompting dentro del turno</h3>
+  <p>Instrucciones concretas, ejemplos (few-shot), y pedir pasos intermedios cuando ayuda. Útil, pero frágil si el contexto que lo rodea es ruidoso.</p>
+  <h3>Scaffolding (andamiaje) y harness del agente</h3>
+  <p>La estructura que envuelve al modelo: cómo se dividen las tareas, qué herramientas ve, cómo se validan sus salidas y cuándo se le obliga a comprobar su trabajo. La guía dominante de 2026 insiste en una idea sencilla: <strong>la estructura gana a las instrucciones</strong> —un buen andamiaje con bucles de verificación es más fiable que pedirle «por favor hazlo bien».<sup><a href="#f8">8</a></sup> Anthropic resume la contrapartida: usa un agente solo cuando la tarea lo justifica; para flujos predecibles, un «workflow» acotado es más robusto.<sup><a href="#f7">7</a></sup></p>
+</section>
+
+<section>
+  <p class="kicker">Qué falla</p>
+  <h2>Los problemas, por nombre</h2>
+  <p>Un repaso ordenado de los fallos que la literatura de 2026 documenta, con su causa principal y por qué ocurren.</p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Problema</th><th>Qué es</th><th>Causa principal</th><th>Gravedad</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>Alucinación</b></td>
+        <td>Afirmaciones falsas pero confiadas (datos, citas, APIs inexistentes).</td>
+        <td>Presión estadística del preentrenamiento + métricas que premian adivinar sobre abstenerse.<sup><a href="#f5">5</a></sup></td>
+        <td><span class="pill c">Alta</span></td>
+      </tr>
+      <tr>
+        <td><b>Variabilidad / no-determinismo</b></td>
+        <td>Respuestas distintas ante la misma entrada; evals «flaky».</td>
+        <td>Muestreo probabilístico y aleatoriedad residual incluso a temperatura baja.<sup><a href="#f4">4</a></sup></td>
+        <td><span class="pill w">Media</span></td>
+      </tr>
+      <tr>
+        <td><b>Context rot / deriva</b></td>
+        <td>Pierde precisión según crece el contexto o la sesión se alarga.</td>
+        <td>La exactitud por paso cae con la longitud; el éxito decae geométricamente con el nº de pasos.<sup><a href="#f6">6</a></sup></td>
+        <td><span class="pill c">Alta</span></td>
+      </tr>
+      <tr>
+        <td><b>Fallos de herramientas</b></td>
+        <td>Llama mal una función, inventa argumentos o se desvía de formato.</td>
+        <td>«Format and tool-call drift» aumenta con el horizonte de la tarea.<sup><a href="#f6">6</a></sup></td>
+        <td><span class="pill w">Media</span></td>
+      </tr>
+      <tr>
+        <td><b>Riesgos de agente</b></td>
+        <td>Acciones no deseadas, inyección de instrucciones vía datos, cadenas sin supervisión.</td>
+        <td>Autonomía sin guardrails ni verificación; entradas externas no confiables.<sup><a href="#f9">9</a></sup></td>
+        <td><span class="pill c">Alta</span></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="stat">
+    <span class="n">16</span>
+    <span class="x">pasos: en un estudio de 2026 sobre degradación de agentes, <b>todos</b> los modelos probados colapsaban en tareas agénticas antes de ~16 pasos; el éxito sigue un patrón geométrico (fiabilidad por paso elevada al nº de pasos).<sup><a href="#f6">6</a></sup></span>
+  </div>
+  <div class="stat">
+    <span class="n">0,24</span>
+    <span class="x">probabilidad de éxito proyectada a horizontes de ~100 pasos («escala de producción») en ese mismo estudio, frente a 0,42 a 8 pasos: la fiabilidad no escala linealmente con la longitud de la tarea.<sup><a href="#f6">6</a></sup></span>
+  </div>
+  <p style="font-family:var(--font-ui);font-size:.86rem;color:var(--muted)">Sobre la alucinación hay un punto conceptual importante de 2026: el trabajo de Kalai y colegas (publicado en <em>Nature</em>) argumenta que <strong>las evaluaciones que puntúan solo acierto/error incentivan a mentir con seguridad</strong>, porque abstenerse cuenta como fallo. Su propuesta es cambiar las métricas («open rubrics» que penalizan el error y dan crédito a reconocer incertidumbre).<sup><a href="#f5">5</a></sup></p>
+</section>
+
+<section>
+  <p class="kicker">Cómo acotarlas</p>
+  <h2>Reducir la variabilidad: el repertorio</h2>
+  <p>No hay una bala de plata; se combinan palancas en capas. De la más local a la más sistémica:</p>
+
+  <h3>1. Muestreo: temperatura, top-p, top-k</h3>
+  <p>Bajar la <strong>temperatura</strong> reduce la aleatoriedad (0 ≈ lo más determinista posible), a costa de diversidad y, a veces, de calidad en tareas creativas. <code>top-p</code> y <code>top-k</code> recortan el conjunto de tokens candidatos. Son el primer control, pero no eliminan la variabilidad por completo.<sup><a href="#f10">10</a></sup></p>
+
+  <h3>2. Salida estructurada y esquemas</h3>
+  <p>Obligar al modelo a devolver <strong>JSON que cumpla un esquema</strong> (structured outputs) elimina la variabilidad de formato y hace la salida parseable y testeable. Es la vía estándar para que las llamadas a herramientas sean fiables.</p>
+
+  <h3>3. Grounding / RAG</h3>
+  <p>Anclar las respuestas en fuentes recuperadas en tiempo real reduce alucinaciones al darle al modelo los hechos en el contexto en vez de depender de su memoria. La dirección 2025–2026 es, literalmente, «de esperar a anclar».<sup><a href="#f11">11</a></sup></p>
+
+  <h3>4. Evaluaciones (evals) y observabilidad</h3>
+  <p>Medir de forma sistemática antes y después de cada cambio: datasets de prueba, métricas, y <strong>LLM-as-judge</strong> (usar un modelo para puntuar salidas) con sus sesgos conocidos y correcciones. En 2026 esto se trata ya como disciplina de ingeniería con tooling propio de observabilidad.<sup><a href="#f12">12</a></sup></p>
+
+  <h3>5. Guardrails y bucles de verificación</h3>
+  <p>Filtros de entrada/salida, validación de acciones, límites de permisos y, sobre todo, <strong>hacer que el agente compruebe su propio trabajo</strong> antes de actuar. La tesis de 2026 sobre fiabilidad de agentes: la estructura (verificación, restricciones) rinde más que confiar en las instrucciones.<sup><a href="#f8">8</a></sup> En entornos empresariales esto se formaliza como seguridad de agentes.<sup><a href="#f9">9</a></sup></p>
+
+  <h3>6. Gestión del contexto</h3>
+  <p>Contra el «context rot»: no llenar la ventana por llenarla. Recuperar solo lo relevante, comprimir o resumir el historial, y partir trayectorias largas en pasos acotados y verificables.<sup><a href="#f13">13</a></sup></p>
+</section>
+
+<section>
+  <p class="kicker">En una frase</p>
+  <h2>Resumen</h2>
+  <p class="lead">Las IAs de 2026 son modelos probabilísticos envueltos en chats, herramientas y agentes. Son útiles y flexibles, pero varían, alucinan y se degradan en tareas largas. No se «arreglan» con un prompt: se acotan por capas —muestreo, esquemas, grounding, evals, guardrails y gestión del contexto— y con andamiaje que verifica el trabajo en lugar de confiar en que el modelo lo haga bien solo.</p>
+</section>
+
+<section class="sources">
+  <p class="kicker">Para verificar</p>
+  <h2>Fuentes</h2>
+  <p style="font-family:var(--font-ui);font-size:.86rem;color:var(--muted)">Todas de 2026 salvo donde se indica. Las fechas se comprobaron dentro de cada fuente.</p>
+
+  <div class="src" id="f1"><span class="num">1</span><div class="body"><span class="ttl">The Evolution of Tool Use in LLM Agents: From Single-Tool Call to Multi-Tool Orchestration</span> <span class="when">mar 2026</span> — Harbin Institute of Technology & Harvard. <a href="https://arxiv.org/html/2603.22862v1">arxiv.org/html/2603.22862v1</a></div></div>
+
+  <div class="src" id="f2"><span class="num">2</span><div class="body"><span class="ttl">The future of MCP: 2026 roadmap, enterprise adoption, and what comes next</span> <span class="when">2026</span> — Toloka. <a href="https://toloka.ai/blog/the-future-of-mcp-enterprise-adoption/">toloka.ai/blog/the-future-of-mcp-enterprise-adoption</a></div></div>
+
+  <div class="src" id="f3"><span class="num">3</span><div class="body"><span class="ttl">The 2026-07-28 Specification (Model Context Protocol)</span> <span class="when">28 jul 2026</span> — modelcontextprotocol.io. <a href="https://blog.modelcontextprotocol.io/posts/2026-07-28/">blog.modelcontextprotocol.io/posts/2026-07-28</a></div></div>
+
+  <div class="src" id="f4"><span class="num">4</span><div class="body"><span class="ttl">Introducing Background Temperature to Characterise Hidden Randomness in LLMs</span> <span class="when">2026</span> — Pith. <a href="https://pith.science/paper/2604.22411">pith.science/paper/2604.22411</a></div></div>
+
+  <div class="src" id="f5"><span class="num">5</span><div class="body"><span class="ttl">Evaluating large language models for accuracy incentivizes hallucinations</span> <span class="when">22 abr 2026</span> — Kalai, Nachum, Vempala, Zhang · <em>Nature</em> 653. <a href="https://www.nature.com/articles/s41586-026-10549-w">nature.com/articles/s41586-026-10549-w</a></div></div>
+
+  <div class="src" id="f6"><span class="num">6</span><div class="body"><span class="ttl">How Fast Do Agents Rot? An Empirical Study of Long-Horizon Degradation in LLM Agents</span> <span class="when">sep 2026</span> — S. Mittal. <a href="https://arxiv.org/abs/2609.01660">arxiv.org/abs/2609.01660</a></div></div>
+
+  <div class="src" id="f7"><span class="num">7</span><div class="body"><span class="ttl">Effective context engineering for AI agents</span> <span class="when">2026</span> — Anthropic. <a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents">anthropic.com/engineering/effective-context-engineering-for-ai-agents</a></div></div>
+
+  <div class="src" id="f8"><span class="num">8</span><div class="body"><span class="ttl">AI Agent Reliability 2026: Structure Beats Instructions</span> <span class="when">2026</span> — Nerd Level Tech. <a href="https://nerdleveltech.com/ai-agent-reliability-verification-loops-guardrails">nerdleveltech.com/ai-agent-reliability-verification-loops-guardrails</a></div></div>
+
+  <div class="src" id="f9"><span class="num">9</span><div class="body"><span class="ttl">AI Agent Risks & Guardrails: 2026 Enterprise Security Guide</span> <span class="when">2026</span> — Atlan. <a href="https://atlan.com/know/ai-agent-risks-guardrails/">atlan.com/know/ai-agent-risks-guardrails</a></div></div>
+
+  <div class="src" id="f10"><span class="num">10</span><div class="body"><span class="ttl">LLM Temperature, Top-P, Top-K & Core Parameters: The Complete Control System (2026)</span> <span class="when">2026</span> — Amit Ray. <a href="https://amitray.com/llm-parameters-temperature-top-p-top-k-guide/">amitray.com/llm-parameters-temperature-top-p-top-k-guide</a></div></div>
+
+  <div class="src" id="f11"><span class="num">11</span><div class="body"><span class="ttl">2025–2026 Directions: From Hoping to Grounding (Hallucination Mitigation)</span> <span class="when">2025–2026</span> — The Neural Base. <a href="https://theneuralbase.com/hallucination-mitigation/learn/advanced/2025-2026-directions/">theneuralbase.com/hallucination-mitigation/…/2025-2026-directions</a></div></div>
+
+  <div class="src" id="f12"><span class="num">12</span><div class="body"><span class="ttl">LLM Evals in 2026: A Practitioner's Field Guide</span> <span class="when">2026</span> — DEV Community. <a href="https://dev.to/lamingsrb/llm-evals-in-2026-a-practitioners-field-guide-26if">dev.to/lamingsrb/llm-evals-in-2026-a-practitioners-field-guide</a></div></div>
+
+  <div class="src" id="f13"><span class="num">13</span><div class="body"><span class="ttl">Context Rot: How Long Inputs Degrade LLM Accuracy in 2026</span> <span class="when">2026</span> — TinyFish. <a href="https://www.tinyfish.ai/blog/context-rot">tinyfish.ai/blog/context-rot</a></div></div>
+
+  <div class="src"><span class="num">+</span><div class="body"><span class="ttl">Hallucinations in LLMs: A Lifecycle-Based Survey of Causes, Detection, Mitigation, and Prevention</span> <span class="when">20 jul 2026</span> — arXiv. <a href="https://arxiv.org/abs/2608.26168">arxiv.org/abs/2608.26168</a></div></div>
+
+  <div class="src"><span class="num">+</span><div class="body"><span class="ttl">AI Safety at the Frontier: Paper Highlights of April 2026</span> <span class="when">abr 2026</span> — LessWrong. <a href="https://www.lesswrong.com/posts/pz7Qk2sRZNidT2wjL/ai-safety-at-the-frontier-paper-highlights-of-april-2026">lesswrong.com/posts/…/april-2026</a></div></div>
+</section>
+
+<footer>
+  Documento explicativo. Resume y organiza fuentes de 2026; no evalúa ni toma postura. Donde una idea depende de trabajo anterior, se indica en el texto.
+</footer>
+
+</div>
+
+</body></html>

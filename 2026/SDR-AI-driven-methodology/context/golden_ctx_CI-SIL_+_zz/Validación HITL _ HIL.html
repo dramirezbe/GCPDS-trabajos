@@ -1,0 +1,725 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Validación HITL / HIL</title>
+<style>
+  /* Layout: documento técnico de una columna; banda de contraste en tarjetas,
+     flujo de referencia como diagrama horizontal; estética de banco de medida RF. */
+  :root {
+    --bg: #f3f2ee;
+    --surface: #ffffff;
+    --surface-2: #e9e8e1;
+    --fg: #1c2024;
+    --muted: #5b6168;
+    --line: #d2d0c7;
+    --accent: #0a7d6b;       /* verde señal, medido */
+    --accent-soft: #d3ebe5;
+    --human: #b5611a;        /* ámbar: puntos humanos (HITL) */
+    --human-soft: #f3e2cf;
+    --hw: #2f5ca8;           /* azul: hardware (HIL) */
+    --hw-soft: #d9e2f2;
+    --code: #6b3fa0;         /* violeta: código/software */
+    --code-soft: #e6ddf2;
+    --font-display: "Archivo", "Archivo Expanded", system-ui, sans-serif;
+    --font-body: "IBM Plex Sans", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14171a;
+      --surface: #1c2024;
+      --surface-2: #23282d;
+      --fg: #e7e9ea;
+      --muted: #9aa2a9;
+      --line: #313840;
+      --accent: #37c3a9;
+      --accent-soft: #123630;
+      --human: #e0923f;
+      --human-soft: #3a2a16;
+      --hw: #6f9be0;
+      --hw-soft: #18263d;
+      --code: #b494e0;
+      --code-soft: #271a3a;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14171a;
+    --surface: #1c2024;
+    --surface-2: #23282d;
+    --fg: #e7e9ea;
+    --muted: #9aa2a9;
+    --line: #313840;
+    --accent: #37c3a9;
+    --accent-soft: #123630;
+    --human: #e0923f;
+    --human-soft: #3a2a16;
+    --hw: #6f9be0;
+    --hw-soft: #18263d;
+    --code: #b494e0;
+    --code-soft: #271a3a;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 920px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 0;
+  }
+  h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.15; letter-spacing: -0.01em; }
+  h1 { font-size: clamp(1.9rem, 5vw, 3rem); font-weight: 700; margin: 0 0 .4em; }
+  h2 { font-size: clamp(1.4rem, 3.5vw, 2rem); font-weight: 700; margin: 0 0 .5em; }
+  h3 { font-size: 1.1rem; font-weight: 600; margin: 0 0 .3em; }
+  p { max-width: 68ch; }
+  a { color: var(--accent); text-underline-offset: 2px; }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .9em;
+  }
+
+  /* Encabezado */
+  header {
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
+  }
+  header .wrap { padding-block: 48px 36px; }
+  .lede { font-size: 1.12rem; color: var(--muted); max-width: 64ch; }
+  .question {
+    margin-top: 28px;
+    padding: 18px 20px;
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 10px 10px 0;
+  }
+  .question .q-label { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  .question p { margin: .3em 0 0; font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; color: var(--fg); }
+
+  section { padding-block: 44px; border-bottom: 1px solid var(--line); }
+  section:last-of-type { border-bottom: 0; }
+
+  /* Leyenda de colores semánticos */
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 18px; margin: 18px 0 28px; font-size: .86rem; }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-mono); }
+  .dot { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+  .dot.human { background: var(--human); }
+  .dot.hw { background: var(--hw); }
+  .dot.code { background: var(--code); }
+  .dot.accent { background: var(--accent); }
+
+  /* Tarjetas de metodologías */
+  .methods { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .method {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+  }
+  .method .tag {
+    align-self: flex-start;
+    font-family: var(--font-mono);
+    font-size: .68rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 999px;
+  }
+  .tag.m-code { background: var(--code-soft); color: var(--code); }
+  .tag.m-hw { background: var(--hw-soft); color: var(--hw); }
+  .tag.m-human { background: var(--human-soft); color: var(--human); }
+  .tag.m-accent { background: var(--accent-soft); color: var(--accent); }
+  .method h3 { margin: 0; }
+  .method p { margin: 0; font-size: .92rem; color: var(--muted); }
+  .method .field { font-size: .86rem; }
+  .method .field b { font-family: var(--font-display); font-weight: 600; color: var(--fg); display: block; font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 2px; }
+  .method .ref { margin-top: auto; font-family: var(--font-mono); font-size: .76rem; }
+
+  /* Tabla de coincidencias / diferencias */
+  .table-scroll { overflow-x: auto; margin-top: 10px; border: 1px solid var(--line); border-radius: 12px; }
+  table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: .9rem; }
+  th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  thead th { background: var(--surface-2); font-family: var(--font-display); font-size: .78rem; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); position: sticky; top: 0; }
+  tbody tr:last-child td { border-bottom: 0; }
+  td b { color: var(--accent); font-weight: 600; }
+
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 18px; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+  .panel h3 { color: var(--accent); }
+  .panel.diff h3 { color: var(--human); }
+  .panel ul { margin: .4em 0 0; padding-left: 1.1em; }
+  .panel li { margin-bottom: .5em; font-size: .92rem; }
+
+  /* Fases del flujo */
+  .phases { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 8px; }
+  .phase {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--accent);
+    border-radius: 10px;
+    padding: 18px;
+    min-width: 0;
+  }
+  .phase .num { font-family: var(--font-mono); font-size: .75rem; color: var(--accent); letter-spacing: .1em; }
+  .phase h3 { margin: 4px 0 8px; font-size: 1.02rem; }
+  .phase p { font-size: .88rem; color: var(--muted); margin: 0 0 10px; }
+  .phase .gate {
+    font-size: .82rem;
+    background: var(--surface-2);
+    border-radius: 8px;
+    padding: 9px 11px;
+    margin: 0;
+  }
+  .phase .gate b { font-family: var(--font-mono); font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 3px; }
+  .phase .roles { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .chip { font-family: var(--font-mono); font-size: .68rem; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); }
+  .chip.human { color: var(--human); border-color: var(--human); }
+  .chip.hw { color: var(--hw); border-color: var(--hw); }
+  .chip.code { color: var(--code); border-color: var(--code); }
+
+  figure { margin: 24px 0 0; }
+  figure svg { width: 100%; height: auto; max-width: 100%; display: block; }
+  .diagram-scroll { overflow-x: auto; }
+  figcaption { font-size: .82rem; color: var(--muted); margin-top: 10px; font-family: var(--font-mono); }
+
+  .callout {
+    background: var(--human-soft);
+    border-left: 3px solid var(--human);
+    border-radius: 0 10px 10px 0;
+    padding: 16px 20px;
+    margin-top: 24px;
+  }
+  .callout p { margin: 0; font-size: .92rem; }
+  .callout b { color: var(--human); }
+
+  /* Referencias */
+  .refs ol { padding-left: 1.2em; }
+  .refs li { margin-bottom: 12px; font-size: .9rem; }
+  .refs .meta { font-family: var(--font-mono); font-size: .74rem; color: var(--muted); display: block; margin-top: 2px; }
+  .badge-2026 { color: var(--accent); font-weight: 600; }
+  .base-note { font-size: .86rem; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; padding: 14px 16px; margin-top: 18px; }
+
+  /* Desglose profundo por fase */
+  .deep { display: flex; flex-direction: column; gap: 22px; margin-top: 10px; }
+  .block {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px 24px;
+    min-width: 0;
+  }
+  .block > header { background: none; border: 0; padding: 0; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .block .num {
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    letter-spacing: .1em;
+    color: #fff;
+    background: var(--accent);
+    padding: 3px 9px;
+    border-radius: 6px;
+    flex: none;
+  }
+  .block.b-human .num { background: var(--human); }
+  .block.b-hw .num { background: var(--hw); }
+  .block.b-code .num { background: var(--code); }
+  .block h3 { margin: 0; font-size: 1.25rem; }
+  .block .who { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+  .block .lead { font-size: .96rem; margin: 0 0 14px; max-width: 72ch; }
+  .io {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    background: var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .io div { background: var(--surface-2); padding: 11px 14px; }
+  .io .k { font-family: var(--font-mono); font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 3px; }
+  .io p { margin: 0; font-size: .86rem; }
+  .rows { display: grid; gap: 12px; }
+  .row { display: grid; grid-template-columns: 150px 1fr; gap: 14px; align-items: start; }
+  .row .label {
+    font-family: var(--font-display);
+    font-size: .74rem;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    padding-top: 2px;
+  }
+  .row.oracle .label { color: var(--hw); }
+  .row.fail .label { color: var(--human); }
+  .row p { margin: 0; font-size: .92rem; }
+  .row .gatebox {
+    background: var(--accent-soft);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: .9rem;
+    margin: 0;
+  }
+  .row .sdr { font-size: .9rem; border-left: 2px solid var(--line); padding-left: 12px; font-style: italic; color: var(--muted); margin: 0; }
+
+  footer { padding-block: 32px 48px; }
+  footer p { font-size: .82rem; color: var(--muted); font-family: var(--font-mono); }
+
+  @media (max-width: 560px) {
+    .split { grid-template-columns: 1fr; }
+    .io { grid-template-columns: 1fr; }
+    .row { grid-template-columns: 1fr; gap: 4px; }
+    .block .who { margin-left: 0; }
+  }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<header>
+  <div class="wrap">
+    <p class="eyebrow">Validación de hipótesis · HITL · HIL · Código</p>
+    <h1>Cómo se valida de verdad: de la hipótesis con requerimientos a la decisión</h1>
+    <p class="lede">Contraste de metodologías que combinan <b>humano en el lazo</b> (HITL), <b>hardware en el lazo</b> (HIL) y software como herramienta de validación, y una estructura general derivada de lo que todas comparten. Ejemplos del dominio SDR/RF.</p>
+    <div class="question">
+      <span class="q-label">La pregunta de fondo</span>
+      <p>¿Cómo hace la gente este tipo de tareas en la práctica?</p>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">Respuesta corta</p>
+    <h2>Nadie "valida de una vez"; se valida por capas que estrechan la incertidumbre</h2>
+    <p>En la práctica, validar una hipótesis con requerimientos y restricciones no es un solo test: es una <b>cadena de verificaciones baratas a caras</b>, donde cada capa confirma algo distinto y el humano decide en los puntos que importan. El software hace el trabajo repetitivo (generar, ejecutar, probar, puntuar); el hardware desmiente lo que la simulación no puede ver; y el humano formula el problema, fija los criterios y acepta el resultado. Las disciplinas le ponen nombres distintos (ingeniería de sistemas, V&amp;V, CI sobre simulación, bancos HIL, agentes científicos, análisis multicriterio), pero el esqueleto es sorprendentemente parecido.</p>
+    <div class="legend">
+      <span><i class="dot code"></i>Código / software como herramienta</span>
+      <span><i class="dot hw"></i>HIL — hardware en el lazo</span>
+      <span><i class="dot human"></i>HITL — humano en el lazo</span>
+      <span><i class="dot accent"></i>Criterio / punto de decisión</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">Parte 1 · Contraste</p>
+    <h2>Cinco enfoques para el mismo problema</h2>
+    <p>Cada uno nació en un contexto distinto y optimiza algo diferente, pero todos tratan la validación como un embudo con puertas de decisión.</p>
+
+    <div class="methods">
+      <article class="method">
+        <span class="tag m-accent">Ingeniería de sistemas</span>
+        <h3>Modelo en V y verificación de requisitos</h3>
+        <p>Cada requisito se enlaza a una actividad de verificación mediante una matriz de trazabilidad; el lado derecho de la V "cierra" lo que el izquierdo prometió.</p>
+        <div class="field"><b>Valida</b>que el sistema cumple lo especificado (verificación) y que lo especificado sirve para su uso (validación).</div>
+        <div class="field"><b>Humano</b>define requisitos y acepta; la trazabilidad hace auditable el impacto de cada cambio.</div>
+        <p class="ref">Ref. [1][2]</p>
+      </article>
+
+      <article class="method">
+        <span class="tag m-code">Software / CI</span>
+        <h3>TDD y CI sobre simulación (SIL)</h3>
+        <p>Pruebas unitarias e integración en el PC, luego software-in-the-loop: partes reales enlazadas a modelos de periféricos. La tubería compila, prueba y mide cobertura automáticamente.</p>
+        <div class="field"><b>Valida</b>que la lógica del código es correcta y reproducible antes de tocar hardware.</div>
+        <div class="field"><b>Puerta</b>"aprobar el merge solo si las características coinciden con la especificación".</div>
+        <p class="ref">Ref. [3][4]</p>
+      </article>
+
+      <article class="method">
+        <span class="tag m-hw">Hardware real</span>
+        <h3>Bancos HIL (MIL → SIL → PIL → HIL)</h3>
+        <p>El controlador terminado se conecta por cableado real a una planta simulada en tiempo real (µs). Aparecen inestabilidades y lógica de protección que "solo se ven cuando la planta responde".</p>
+        <div class="field"><b>Valida</b>timing, interrupciones, fallos inyectados y fidelidad de señal que la simulación pura no revela.</div>
+        <div class="field"><b>Criterio</b>el modelo de planta se valida contra hardware medido; paso de tiempo acorde a la frecuencia de conmutación.</div>
+        <p class="ref">Ref. [5][6]</p>
+      </article>
+
+      <article class="method">
+        <span class="tag m-human">Agentes + humano</span>
+        <h3>Agentes científicos: LLM-as-judge + HITL</h3>
+        <p>Agentes que generan y prueban hipótesis. El survey 2026 advierte una "brecha de verificación": el 83% publica código pero solo el 38% da artefactos reproducibles, y el autojuicio del LLM no garantiza nada.</p>
+        <div class="field"><b>Valida</b>poco por sí solo: hace falta un verificador externo (oráculo, medición física, prueba formal).</div>
+        <div class="field"><b>Humano</b>debe entrar <em>antes</em> de las decisiones autónomas, no solo al final (hoy es lo común y el fallo).</div>
+        <p class="ref">Ref. [7][8]</p>
+      </article>
+
+      <article class="method">
+        <span class="tag m-accent">Decisión</span>
+        <h3>Análisis multicriterio (MCDA)</h3>
+        <p>Cuando hay varias hipótesis/opciones válidas, se puntúa cada una por criterios ponderados y se elige. El estudio 2026 muestra que el ranking es sensible: un 4% de cambio en un indicador puede invertir el ganador.</p>
+        <div class="field"><b>Valida</b>la elección relativa entre alternativas que ya pasaron el umbral absoluto.</div>
+        <div class="field"><b>Criterio</b>obliga a análisis de sensibilidad y a métodos resistentes a la inversión de rango (SPOTIS, COMET).</div>
+        <p class="ref">Ref. [9][10]</p>
+      </article>
+    </div>
+
+    <h3 style="margin-top:36px">En qué coinciden y en qué difieren</h3>
+    <div class="split">
+      <div class="panel">
+        <h3>Coinciden en…</h3>
+        <ul>
+          <li><b>Separar verificación de validación:</b> "¿lo construí bien?" vs. "¿construí lo correcto?".</li>
+          <li><b>Escalar de barato a caro:</b> modelo → software → hardware; nadie salta directo al banco real.</li>
+          <li><b>Criterios de aceptación explícitos</b> fijados <em>antes</em> de ejecutar, ligados a los requisitos.</li>
+          <li><b>Un oráculo externo:</b> la validación creíble necesita algo que no sea el propio generador (medición, prueba formal, humano).</li>
+          <li><b>Humano en los extremos:</b> formula el problema y acepta el resultado.</li>
+        </ul>
+      </div>
+      <div class="panel diff">
+        <h3>Difieren en…</h3>
+        <ul>
+          <li><b>Dónde está el oráculo:</b> una matriz de requisitos, un test que pasa, una medición de hardware, un juez humano o un cálculo multicriterio.</li>
+          <li><b>Cuánta autonomía</b> se le da al software antes de pedir un humano.</li>
+          <li><b>Qué riesgo cubren:</b> lógica (CI), física (HIL), novedad/reproducibilidad (agentes), elección entre varias (MCDA).</li>
+          <li><b>Una vs. varias hipótesis:</b> V&amp;V y HIL validan una contra su spec; MCDA aparece solo cuando hay que elegir.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><b>Ejemplo SDR/RF.</b> Un banco HIL para receptores R-Mode de media frecuencia genera la señal MSK con un <b>Ettus N210</b> y dos tonos continuos con un generador sincronizado (o un LimeSDR con conversión descendente). Así se prueban deriva de fase, estabilidad y precisión de posicionamiento "sin necesidad de pruebas de campo": el software define la forma de onda, el hardware revela la deriva real, y el ingeniero acepta contra el requisito de ranging. [11]</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">Parte 2 · Estructura general</p>
+    <h2>Un flujo de referencia contrastado</h2>
+    <p>Combinando lo que las cinco familias comparten, esta es una estructura general para validar una hipótesis (o un conjunto) que viene con requerimientos y restricciones, usando código, HIL y HITL. Son <b>seis fases con puertas de decisión</b>; cada puerta exige un criterio cumplido para avanzar.</p>
+
+    <figure>
+      <div class="diagram-scroll">
+        <svg viewBox="0 0 980 360" role="img" aria-label="Flujo de seis fases: encuadre, modelo, software/CI, banco HIL, juicio y, si hay varias hipótesis, decisión MCDA; con puertas de decisión entre fases y bucle de reparación.">
+          <defs>
+            <marker id="arw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+            </marker>
+            <marker id="arwA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#0a7d6b"/>
+            </marker>
+          </defs>
+
+          <!-- Carril de roles -->
+          <text x="10" y="30" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.6">ROLES</text>
+
+          <!-- Fila de fases -->
+          <g font-family="Archivo, sans-serif" font-size="13">
+            <!-- F0 -->
+            <rect x="10" y="60" width="140" height="78" rx="8" fill="none" stroke="#b5611a" stroke-width="1.5"/>
+            <text x="22" y="82" font-family="IBM Plex Mono, monospace" font-size="10" fill="#b5611a">FASE 0</text>
+            <text x="22" y="102" font-weight="600" fill="currentColor">Encuadre</text>
+            <text x="22" y="120" font-size="11" fill="currentColor" opacity="0.7">Requisitos,</text>
+            <text x="22" y="133" font-size="11" fill="currentColor" opacity="0.7">restricciones, rúbrica</text>
+
+            <!-- F1 -->
+            <rect x="178" y="60" width="140" height="78" rx="8" fill="none" stroke="#6b3fa0" stroke-width="1.5"/>
+            <text x="190" y="82" font-family="IBM Plex Mono, monospace" font-size="10" fill="#6b3fa0">FASE 1</text>
+            <text x="190" y="102" font-weight="600" fill="currentColor">Modelo</text>
+            <text x="190" y="120" font-size="11" fill="currentColor" opacity="0.7">MIL / simulación,</text>
+            <text x="190" y="133" font-size="11" fill="currentColor" opacity="0.7">grounding normativo</text>
+
+            <!-- F2 -->
+            <rect x="346" y="60" width="140" height="78" rx="8" fill="none" stroke="#6b3fa0" stroke-width="1.5"/>
+            <text x="358" y="82" font-family="IBM Plex Mono, monospace" font-size="10" fill="#6b3fa0">FASE 2</text>
+            <text x="358" y="102" font-weight="600" fill="currentColor">Software / CI</text>
+            <text x="358" y="120" font-size="11" fill="currentColor" opacity="0.7">SIL, TDD, bucle</text>
+            <text x="358" y="133" font-size="11" fill="currentColor" opacity="0.7">generar-probar-reparar</text>
+
+            <!-- F3 -->
+            <rect x="514" y="60" width="140" height="78" rx="8" fill="none" stroke="#2f5ca8" stroke-width="1.5"/>
+            <text x="526" y="82" font-family="IBM Plex Mono, monospace" font-size="10" fill="#2f5ca8">FASE 3</text>
+            <text x="526" y="102" font-weight="600" fill="currentColor">Banco HIL</text>
+            <text x="526" y="120" font-size="11" fill="currentColor" opacity="0.7">PIL → HIL, fallos</text>
+            <text x="526" y="133" font-size="11" fill="currentColor" opacity="0.7">inyectados, tiempo real</text>
+
+            <!-- F4 -->
+            <rect x="682" y="60" width="140" height="78" rx="8" fill="none" stroke="#b5611a" stroke-width="1.5"/>
+            <text x="694" y="82" font-family="IBM Plex Mono, monospace" font-size="10" fill="#b5611a">FASE 4</text>
+            <text x="694" y="102" font-weight="600" fill="currentColor">Juicio</text>
+            <text x="694" y="120" font-size="11" fill="currentColor" opacity="0.7">LLM-as-judge +</text>
+            <text x="694" y="133" font-size="11" fill="currentColor" opacity="0.7">revisión humana</text>
+
+            <!-- F5 -->
+            <rect x="850" y="60" width="120" height="78" rx="8" fill="none" stroke="#0a7d6b" stroke-width="1.5"/>
+            <text x="862" y="82" font-family="IBM Plex Mono, monospace" font-size="10" fill="#0a7d6b">FASE 5</text>
+            <text x="862" y="102" font-weight="600" fill="currentColor">Decisión</text>
+            <text x="862" y="120" font-size="11" fill="currentColor" opacity="0.7">MCDA si hay</text>
+            <text x="862" y="133" font-size="11" fill="currentColor" opacity="0.7">varias hipótesis</text>
+          </g>
+
+          <!-- Flechas entre fases -->
+          <g stroke="currentColor" stroke-width="1.5" fill="none" marker-end="url(#arw)">
+            <line x1="150" y1="99" x2="176" y2="99"/>
+            <line x1="318" y1="99" x2="344" y2="99"/>
+            <line x1="486" y1="99" x2="512" y2="99"/>
+            <line x1="654" y1="99" x2="680" y2="99"/>
+            <line x1="822" y1="99" x2="848" y2="99"/>
+          </g>
+
+          <!-- Puertas de decisión (etiquetas sobre las flechas) -->
+          <g font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#0a7d6b" text-anchor="middle">
+            <text x="163" y="50">G0</text>
+            <text x="331" y="50">G1</text>
+            <text x="499" y="50">G2</text>
+            <text x="667" y="50">G3</text>
+            <text x="835" y="50">G4</text>
+          </g>
+          <g fill="#0a7d6b" opacity="0.9">
+            <circle cx="163" cy="99" r="3"/><circle cx="331" cy="99" r="3"/>
+            <circle cx="499" cy="99" r="3"/><circle cx="667" cy="99" r="3"/>
+            <circle cx="835" cy="99" r="3"/>
+          </g>
+
+          <!-- Bucle de reparación: de Fase 2/3 de vuelta al modelo -->
+          <path d="M 416 138 C 416 210, 250 210, 248 142" stroke="#6b3fa0" stroke-width="1.4" fill="none" stroke-dasharray="5 4" marker-end="url(#arw)" opacity="0.85"/>
+          <text x="300" y="205" font-family="IBM Plex Mono, monospace" font-size="10" fill="#6b3fa0" text-anchor="middle">falla → reparar / reformular</text>
+
+          <!-- Rechazo HIL de vuelta a software -->
+          <path d="M 584 138 C 584 240, 430 240, 416 142" stroke="#2f5ca8" stroke-width="1.4" fill="none" stroke-dasharray="5 4" marker-end="url(#arw)" opacity="0.8"/>
+          <text x="500" y="258" font-family="IBM Plex Mono, monospace" font-size="10" fill="#2f5ca8" text-anchor="middle">brecha sim↔hardware → volver a Fase 2</text>
+
+          <!-- Franja de criterios de aceptación -->
+          <g>
+            <rect x="10" y="290" width="960" height="54" rx="8" fill="#0a7d6b" opacity="0.08"/>
+            <text x="22" y="312" font-family="IBM Plex Mono, monospace" font-size="10" fill="#0a7d6b" letter-spacing="0.08em">CRITERIOS DE ACEPTACIÓN EN CADA PUERTA</text>
+            <text x="22" y="332" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor">G0 rúbrica fijada · G1 modelo coincide con medición · G2 tests + cobertura verdes · G3 sin fallos en HIL · G4 humano acepta contra requisito</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption>Flujo de referencia. Las líneas punteadas son bucles de reparación: una hipótesis rara vez pasa a la primera. La Fase 5 solo aplica cuando hay varias hipótesis que comparar.</figcaption>
+    </figure>
+
+    <h3 style="margin-top:36px">Las seis fases en detalle</h3>
+    <div class="phases">
+      <div class="phase">
+        <span class="num">FASE 0</span>
+        <h3>Encuadre</h3>
+        <p>Traducir la hipótesis a requisitos verificables y restricciones (normativas, de hardware). Definir la rúbrica y los umbrales <em>antes</em> de medir.</p>
+        <p class="gate"><b>Puerta G0</b>Rúbrica y matriz de trazabilidad acordadas.</p>
+        <div class="roles"><span class="chip human">humano formula</span></div>
+      </div>
+      <div class="phase">
+        <span class="num">FASE 1</span>
+        <h3>Modelo / simulación</h3>
+        <p>MIL: todo simulado para comprobar que la lógica es sana. Grounding/RAG contra la normativa aplicable.</p>
+        <p class="gate"><b>Puerta G1</b>El modelo de planta coincide con hardware medido.</p>
+        <div class="roles"><span class="chip code">código</span></div>
+      </div>
+      <div class="phase">
+        <span class="num">FASE 2</span>
+        <h3>Software / CI</h3>
+        <p>SIL + bucle generar-ejecutar-probar-reparar con TDD y pruebas automáticas. La tubería mide cobertura.</p>
+        <p class="gate"><b>Puerta G2</b>Tests verdes y cobertura/umbral cumplidos.</p>
+        <div class="roles"><span class="chip code">código</span><span class="chip human">revisión de merge</span></div>
+      </div>
+      <div class="phase">
+        <span class="num">FASE 3</span>
+        <h3>Banco HIL</h3>
+        <p>PIL y luego HIL en tiempo real, con inyección de fallos y señal realista. Aquí muere el "validado en simulación".</p>
+        <p class="gate"><b>Puerta G3</b>Sin fallos críticos con hardware en el lazo.</p>
+        <div class="roles"><span class="chip hw">hardware</span><span class="chip code">código</span></div>
+      </div>
+      <div class="phase">
+        <span class="num">FASE 4</span>
+        <h3>Juicio</h3>
+        <p>LLM-as-judge calibrado para cribar, pero con un oráculo externo y revisión humana que entra <em>antes</em> de aceptar.</p>
+        <p class="gate"><b>Puerta G4</b>Humano acepta contra el requisito; evidencia reproducible.</p>
+        <div class="roles"><span class="chip human">humano decide</span><span class="chip code">juez</span></div>
+      </div>
+      <div class="phase">
+        <span class="num">FASE 5</span>
+        <h3>Decisión multicriterio</h3>
+        <p>Solo si hay varias hipótesis válidas: puntuar por criterios ponderados, análisis de sensibilidad y elección final humana.</p>
+        <p class="gate"><b>Salida</b>Hipótesis elegida con trade-offs explícitos.</p>
+        <div class="roles"><span class="chip human">humano elige</span></div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><b>El principio que no cambia.</b> En cada puerta debe haber un <b>oráculo que no sea el propio generador</b>: una medición, una prueba formal, un test determinista o un humano. Es lo que separa "parece correcto" de "está validado", y es exactamente la brecha que el survey 2026 de agentes científicos señala como el fallo más común. [7]</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">Parte 3 · Cada bloque en profundidad</p>
+    <h2>Las seis fases, desarmadas</h2>
+    <p>Para cada bloque: qué hace, qué entra y qué sale, quién actúa (<span style="color:var(--code)">código</span> / <span style="color:var(--hw)">HIL</span> / <span style="color:var(--human)">HITL</span>), el criterio de su puerta de decisión, el oráculo externo que la valida, los fallos típicos y un ejemplo del dominio SDR/RF.</p>
+
+    <div class="deep">
+
+      <article class="block b-human">
+        <header>
+          <span class="num">FASE 0</span>
+          <h3>Encuadre</h3>
+          <div class="who"><span class="chip human">humano formula</span></div>
+        </header>
+        <p class="lead">Convierte una hipótesis vaga en algo <b>comprobable</b>. No se valida nada todavía: se decide qué significará "validado". Aquí se traduce la hipótesis a requisitos medibles, se listan las restricciones (normativas, de hardware, de presupuesto de potencia/ancho de banda) y se fija la rúbrica con sus umbrales <em>antes</em> de ver un solo dato, para no mover la meta después.</p>
+        <div class="io">
+          <div><span class="k">Entradas</span><p>Hipótesis, contexto de uso, normativa aplicable, limitaciones del hardware disponible.</p></div>
+          <div><span class="k">Salidas</span><p>Lista de requisitos verificables + matriz de trazabilidad + rúbrica con umbrales y pesos.</p></div>
+        </div>
+        <div class="rows">
+          <div class="row"><span class="label">Quién actúa</span><p>El humano, sobre todo. Es el punto HITL más importante y el que los sistemas autónomos suelen saltarse: el survey 2026 señala que el humano entra "al final en vez de condicionar las decisiones autónomas". [7]</p></div>
+          <div class="row"><span class="label">Puerta G0</span><p class="gatebox">Rúbrica, umbrales y matriz de trazabilidad acordados y congelados. Cada requisito tiene asignada su futura actividad de verificación. [1]</p></div>
+          <div class="row oracle"><span class="label">Oráculo externo</span><p>El propio requisito escrito y acordado: es el contrato contra el que todo lo demás se medirá. Sin él, las fases siguientes no tienen contra qué comparar.</p></div>
+          <div class="row fail"><span class="label">Fallos típicos</span><p>Hipótesis no falsable; criterios definidos "a ojo" después de medir; confundir "me gusta el resultado" con "cumple el requisito"; olvidar una restricción normativa que invalida todo más adelante.</p></div>
+          <div class="row"><span class="label">Ejemplo SDR/RF</span><p class="sdr">Hipótesis: "este receptor puede posicionar por fase con R-Mode". Requisito verificable: error de ranging &lt; X m con deriva de fase acotada en 40 min, dentro de la banda MF y respetando la máscara de emisión.</p></div>
+        </div>
+      </article>
+
+      <article class="block b-code">
+        <header>
+          <span class="num">FASE 1</span>
+          <h3>Modelo / simulación (MIL)</h3>
+          <div class="who"><span class="chip code">código</span></div>
+        </header>
+        <p class="lead">Primera prueba barata: todo en ecuaciones. Model-in-the-loop comprueba que la <b>estrategia es sana</b> antes de escribir código de producción. Se añade grounding/RAG contra la normativa para que las decisiones de diseño citen la fuente aplicable y no una suposición.</p>
+        <div class="io">
+          <div><span class="k">Entradas</span><p>Requisitos de la Fase 0, modelo matemático de la planta/canal, normativa indexada.</p></div>
+          <div><span class="k">Salidas</span><p>Diseño conceptual validado en simulación + modelo de planta que se usará en el banco HIL.</p></div>
+        </div>
+        <div class="rows">
+          <div class="row"><span class="label">Quién actúa</span><p>Código y simulación. El humano revisa supuestos del modelo, pero el bucle es automático.</p></div>
+          <div class="row"><span class="label">Puerta G1</span><p class="gatebox">El modelo de planta coincide con hardware medido (o datos de referencia). Un modelo no validado hace que todo lo posterior sea ficción convincente. [5]</p></div>
+          <div class="row oracle"><span class="label">Oráculo externo</span><p>Mediciones físicas de referencia contra las que se calibra el modelo. La simulación no se valida a sí misma.</p></div>
+          <div class="row fail"><span class="label">Fallos típicos</span><p>Confiar en un modelo idealizado (sin ruido, sin no linealidades); sobreajustar el modelo a un único escenario; tratar "pasó en MIL" como evidencia final.</p></div>
+          <div class="row"><span class="label">Ejemplo SDR/RF</span><p class="sdr">Simular la señal R-Mode (MSK + dos tonos CW) y el estimador de fase en banda base, verificando el algoritmo de ranging antes de generar nada por hardware. [11]</p></div>
+        </div>
+      </article>
+
+      <article class="block b-code">
+        <header>
+          <span class="num">FASE 2</span>
+          <h3>Software / CI (SIL)</h3>
+          <div class="who"><span class="chip code">código</span><span class="chip human">revisión de merge</span></div>
+        </header>
+        <p class="lead">El código de producción entra al banco de pruebas automático. Software-in-the-loop: partes reales enlazadas a modelos de periféricos, con TDD y el bucle <b>generar → ejecutar → probar → reparar</b>. La tubería de CI compila para varios objetivos, corre pruebas unitarias e integración y mide cobertura, de forma repetible en cada cambio.</p>
+        <div class="io">
+          <div><span class="k">Entradas</span><p>Diseño validado en Fase 1, código de producción, suite de pruebas derivada de los requisitos.</p></div>
+          <div><span class="k">Salidas</span><p>Build que pasa todas las pruebas, con cobertura medida y trazabilidad requisito→test.</p></div>
+        </div>
+        <div class="rows">
+          <div class="row"><span class="label">Quién actúa</span><p>Código ejecuta; el humano revisa el merge. La puerta puede ser automática ("aprobar el merge solo si las características coinciden con la especificación"). [3]</p></div>
+          <div class="row"><span class="label">Puerta G2</span><p class="gatebox">Tests verdes + cobertura/umbral cumplidos. Un fallo aquí reabre el bucle de reparación o reformula el diseño. [3][4]</p></div>
+          <div class="row oracle"><span class="label">Oráculo externo</span><p>La suite de pruebas determinista, derivada de los requisitos. No depende del criterio del que escribió el código.</p></div>
+          <div class="row fail"><span class="label">Fallos típicos</span><p>Tests que replican el error del código; perseguir cobertura sin aserciones significativas; estabilidad numérica distinta en el objetivo real; tratar "verde en SIL" como "validado" (la trampa que mata la Fase 3).</p></div>
+          <div class="row"><span class="label">Ejemplo SDR/RF</span><p class="sdr">El demodulador MSK y el estimador de fase corren en el host contra IQ sintético; CI verifica BER y precisión de fase en cada commit antes de tocar el USRP.</p></div>
+        </div>
+      </article>
+
+      <article class="block b-hw">
+        <header>
+          <span class="num">FASE 3</span>
+          <h3>Banco HIL (PIL → HIL)</h3>
+          <div class="who"><span class="chip hw">hardware</span><span class="chip code">código</span></div>
+        </header>
+        <p class="lead">Aquí muere el "validado en simulación". Primero PIL (el procesador objetivo corre el firmware sin la planta), luego HIL: el controlador terminado se conecta por <b>cableado real</b> a una planta simulada en tiempo real (µs), con inyección de fallos y señal realista. Aparecen inestabilidades de lazo y lógica de protección que "solo se ven cuando la planta responde".</p>
+        <div class="io">
+          <div><span class="k">Entradas</span><p>Firmware que pasó Fase 2, modelo de planta validado (G1), hardware objetivo, banco en tiempo real.</p></div>
+          <div><span class="k">Salidas</span><p>Evidencia de comportamiento con hardware en el lazo bajo fallos y condiciones realistas.</p></div>
+        </div>
+        <div class="rows">
+          <div class="row"><span class="label">Quién actúa</span><p>Hardware real + código de estímulo. El humano configura escenarios de fallo y revisa anomalías.</p></div>
+          <div class="row"><span class="label">Puerta G3</span><p class="gatebox">Sin fallos críticos con hardware en el lazo; timing, interrupciones y fidelidad de señal dentro de spec. Paso de tiempo acorde a la frecuencia de conmutación. [5][6]</p></div>
+          <div class="row oracle"><span class="label">Oráculo externo</span><p>El hardware físico mismo. Es el oráculo más caro y el único que revela la brecha simulación↔realidad; un fallo aquí devuelve a Fase 2.</p></div>
+          <div class="row fail"><span class="label">Fallos típicos</span><p>Paso de tiempo mal elegido frente a la conmutación; señal sin ruido/offsets realistas; no inyectar fallos; dar por buena una planta no validada; confundir estabilidad en lazo abierto con lazo cerrado.</p></div>
+          <div class="row"><span class="label">Ejemplo SDR/RF</span><p class="sdr">Banco R-Mode: Ettus N210 genera la MSK y un generador sincronizado los dos CW (o LimeSDR con conversión descendente); el receptor real mide deriva de fase y posicionamiento 40 min "sin pruebas de campo". [11]</p></div>
+        </div>
+      </article>
+
+      <article class="block b-human">
+        <header>
+          <span class="num">FASE 4</span>
+          <h3>Juicio</h3>
+          <div class="who"><span class="chip human">humano decide</span><span class="chip code">juez</span></div>
+        </header>
+        <p class="lead">Se consolida la evidencia y se decide si la hipótesis queda validada contra su requisito. Un LLM-as-judge calibrado puede <b>cribar y resumir</b>, pero no es el oráculo: el autojuicio "no garantiza que una afirmación o experimento haya sido comprobado de forma independiente". La revisión humana entra <em>antes</em> de aceptar, no como sello final. [7]</p>
+        <div class="io">
+          <div><span class="k">Entradas</span><p>Resultados de Fases 2–3, artefactos reproducibles (semillas, trazas), rúbrica de Fase 0.</p></div>
+          <div><span class="k">Salidas</span><p>Veredicto trazable "cumple / no cumple el requisito" + evidencia reproducible.</p></div>
+        </div>
+        <div class="rows">
+          <div class="row"><span class="label">Quién actúa</span><p>Humano decide; el LLM-juez acelera el cribado. Es un caso "colaboración necesaria": juntos superan lo que cada uno logra por separado. [8]</p></div>
+          <div class="row"><span class="label">Puerta G4</span><p class="gatebox">El humano acepta contra el requisito, con evidencia reproducible (seeds, trazas, selección de resultados declarada). [7]</p></div>
+          <div class="row oracle"><span class="label">Oráculo externo</span><p>Un verificador independiente del generador: medición física, prueba formal, o el juicio humano calibrado. Nunca el propio modelo que produjo el resultado.</p></div>
+          <div class="row fail"><span class="label">Fallos típicos</span><p>La "brecha de verificación": publicar código sin artefactos reproducibles; confiar en el LLM-juez como oráculo; cherry-picking de corridas favorables; meter al humano solo a firmar al final.</p></div>
+          <div class="row"><span class="label">Ejemplo SDR/RF</span><p class="sdr">El juez compara las métricas de ranging del banco contra el umbral de Fase 0; el ingeniero revisa las corridas anómalas de deriva de fase antes de declarar la hipótesis validada.</p></div>
+        </div>
+      </article>
+
+      <article class="block">
+        <header>
+          <span class="num">FASE 5</span>
+          <h3>Decisión multicriterio (MCDA)</h3>
+          <div class="who"><span class="chip human">humano elige</span></div>
+        </header>
+        <p class="lead">Opcional: solo aparece cuando <b>varias</b> hipótesis pasaron el umbral absoluto y hay que elegir una. Cada alternativa se puntúa por criterios ponderados (coste, consumo, SNR, cumplimiento normativo…) y se comparan trade-offs. No reemplaza las puertas anteriores: elige entre opciones que ya son válidas.</p>
+        <div class="io">
+          <div><span class="k">Entradas</span><p>Varias hipótesis validadas (G4), criterios con pesos, datos de desempeño de cada una.</p></div>
+          <div><span class="k">Salidas</span><p>Hipótesis elegida con trade-offs explícitos y análisis de sensibilidad.</p></div>
+        </div>
+        <div class="rows">
+          <div class="row"><span class="label">Quién actúa</span><p>El humano fija pesos y elige; el software calcula rankings y sensibilidad.</p></div>
+          <div class="row"><span class="label">Salida / puerta</span><p class="gatebox">Elección defendible: el ranking se sostiene bajo análisis de sensibilidad, no por un único peso frágil. [9]</p></div>
+          <div class="row oracle"><span class="label">Oráculo externo</span><p>El análisis de sensibilidad y la comparación entre métodos: si un cambio del 4% en un indicador invierte el ganador, la elección no es robusta. [9]</p></div>
+          <div class="row fail"><span class="label">Fallos típicos</span><p>Pesos arbitrarios; ignorar la inversión de rango (TOPSIS es vulnerable; preferir SPOTIS/COMET); criterios mal anclados; omitir el análisis de sensibilidad. [9]</p></div>
+          <div class="row"><span class="label">Ejemplo SDR/RF</span><p class="sdr">Elegir entre dos cadenas de recepción R-Mode (N210 vs. LimeSDR con conversión) ponderando estabilidad de fase, coste, complejidad y compatibilidad de banda, con sensibilidad sobre los pesos.</p></div>
+        </div>
+      </article>
+
+    </div>
+
+    <div class="callout">
+      <p><b>Lectura transversal.</b> Mira la columna "oráculo externo" de las seis fases: el contrato de requisitos (F0), la medición de referencia (F1), la suite determinista (F2), el hardware físico (F3), el verificador independiente (F4) y el análisis de sensibilidad (F5). <b>Esa columna es la estructura.</b> Todo lo demás es cómo alimentarla.</p>
+    </div>
+  </div>
+</section>
+
+<section class="refs">
+  <div class="wrap">
+    <p class="eyebrow">Referencias</p>
+    <h2>Fuentes, con más peso a 2026</h2>
+    <p>Fechas verificadas al consultar cada fuente. Las marcadas <span class="badge-2026">2026</span> son material reciente; las anteriores se usan solo como base conceptual.</p>
+    <ol>
+      <li>«What is Traceability in the V-Model?», QMSdoc. <span class="badge-2026">12 ene 2026</span>. <span class="meta"><a href="https://qmsdoc.com/2026/01/12/what-is-traceability-in-the-v-model/">qmsdoc.com/2026/01/12/what-is-traceability-in-the-v-model</a></span></li>
+      <li>«V Model in System Engineering», Visure Solutions (guía ALM, base). <span class="meta"><a href="https://visuresolutions.com/alm-guide/v-model-systems-engineering/">visuresolutions.com/alm-guide/v-model-systems-engineering</a></span></li>
+      <li>«Automated Testing for Embedded Software: CI/CD Pipelines, Simulators, and HIL», Promwad. <span class="meta"><a href="https://promwad.com/news/automated-testing-embedded-software">promwad.com/news/automated-testing-embedded-software</a></span></li>
+      <li>«A Comprehensive Guide to Testing Embedded Systems in 2026», Sheridan. <span class="badge-2026">3 abr 2026</span>. <span class="meta"><a href="https://sheridantech.io/2026/04/03/testing-embedded-systems/">sheridantech.io/2026/04/03/testing-embedded-systems</a></span></li>
+      <li>«A Guide to Hardware-in-the-Loop (HIL) Testing», OPAL-RT. <span class="badge-2026">act. 2026</span>. <span class="meta"><a href="https://www.opal-rt.com/blog/a-guide-to-hardware-in-the-loop-testing/">opal-rt.com/blog/a-guide-to-hardware-in-the-loop-testing</a></span></li>
+      <li>«Development of HIL Based Methodology for Over-The-Air Updates Validation» (2026-26-0480), SAE. <span class="badge-2026">2026</span>. <span class="meta"><a href="https://saemobilus.sae.org/papers/development-hil-based-methodology-air-updates-validation-2026-26-0480">saemobilus.sae.org · 2026-26-0480</a></span></li>
+      <li>«Autonomous Research Agents: A Survey of AI Scientists and the Verification Gap», arXiv:2608.05179. <span class="badge-2026">29 jun 2026</span>. <span class="meta"><a href="https://arxiv.org/abs/2608.05179">arxiv.org/abs/2608.05179</a></span></li>
+      <li>«CentaurEval: Benchmarking Human-in-the-Loop Value in Agentic Coding», arXiv:2512.04111. <span class="badge-2026">21 may 2026</span>. <span class="meta"><a href="https://arxiv.org/abs/2512.04111">arxiv.org/abs/2512.04111</a></span></li>
+      <li>«MCDA for sustainability assessment — How reliable are the results?», Sustainable Futures, vol. 11. <span class="badge-2026">jun 2026</span>. <span class="meta"><a href="https://www.sciencedirect.com/science/article/pii/S266618882600016X">sciencedirect.com · S266618882600016X</a></span></li>
+      <li>«What is MCDM/MCDA», 1000minds (base metodológica). <span class="meta"><a href="https://www.1000minds.com/decision-making/what-is-mcdm-mcda">1000minds.com/decision-making/what-is-mcdm-mcda</a></span></li>
+      <li>«Hardware in the Loop Laboratory Test Systems for Medium Frequency R-Mode Receivers» (SDR/RF: Ettus N210, LimeSDR), MDPI Engineering Proceedings. <span class="meta"><a href="https://www.mdpi.com/2673-4591/54/1/59">mdpi.com/2673-4591/54/1/59</a></span></li>
+    </ol>
+
+    <div class="base-note">
+      <b>Base previa de este proyecto</b> (artefactos citados como punto de partida): «Validar hipótesis con IA» (<a href="https://claude.ai/artifact/4fe5BVof7W9zgmu29BGMYS">enlace</a>), «Control de hardware vía tools» (<a href="https://claude.ai/artifact/Td7h4QZ78VqwfFCvZjQoxq">enlace</a>) y «Cómo funcionan las IAs actuales» (<a href="https://claude.ai/artifact/7MVp3veq3fiXuuTVVFQQ9e">enlace</a>).
+      <br><br>
+      <b>Dónde falta fuente reciente sólida:</b> no encontré un estándar 2026 que unifique HITL+HIL+agentes en un solo marco; la estructura general de la Parte 2 es una síntesis propia derivada del contraste, no una norma publicada. El peso 2026 es fuerte en V&amp;V, HIL y agentes científicos; en MCDA aplicado a selección de hipótesis técnicas, la evidencia 2026 es sobre fiabilidad del método, no sobre su uso con agentes.
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>Modo explicador · síntesis con referencias verificadas · 1 oct 2026</p>
+  </div>
+</footer>
+
+</body></html>

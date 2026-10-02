@@ -1,0 +1,288 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Acople de zz_Workflow</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  /* Layout: página-informe en una columna de lectura (~68ch), con matriz y tiras
+     de cobertura a ancho completo; estética de panel de instrumento RF. */
+  :root{
+    --bg:#f3f1ec; --panel:#faf9f5; --ink:#1b1e24; --muted:#5c6470;
+    --line:#d9d4c8; --line-strong:#c2bcac;
+    --accent:#1f6f6b;      /* verde cian de osciloscopio */
+    --accent-soft:#e2efed;
+    --signal:#c45a28;      /* ámbar de traza */
+    --good:#2f7d50; --warn:#b8860b; --bad:#a23b2e;
+    --font-display:"Space Grotesk","Segoe UI",system-ui,sans-serif;
+    --font-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+    --font-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#13161a; --panel:#1b1f25; --ink:#e9e7e0; --muted:#9aa2ae;
+    --line:#2d333c; --line-strong:#3c444f;
+    --accent:#4fd6cd; --accent-soft:#17302e;
+    --signal:#e8894f; --good:#5cc082; --warn:#d8aa3e; --bad:#e07866;
+    color-scheme:dark;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#13161a; --panel:#1b1f25; --ink:#e9e7e0; --muted:#9aa2ae;
+    --line:#2d333c; --line-strong:#3c444f;
+    --accent:#4fd6cd; --accent-soft:#17302e;
+    --signal:#e8894f; --good:#5cc082; --warn:#d8aa3e; --bad:#e07866;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font-family:var(--font-body);
+    line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:860px;margin:0 auto;padding-block:0 72px;padding-inline:20px}
+  h1,h2,h3{font-family:var(--font-display);text-wrap:balance;line-height:1.15;font-weight:600}
+  a{color:var(--accent);text-underline-offset:2px}
+  code,.mono{font-family:var(--font-mono);font-size:.86em}
+
+  /* Cabecera */
+  header{padding-block:40px 28px;border-bottom:2px solid var(--line-strong);margin-bottom:8px}
+  .eyebrow{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+  h1{font-size:clamp(1.9rem,5vw,2.9rem);margin:0 0 16px;letter-spacing:-.01em}
+  .lede{font-size:1.12rem;color:var(--muted);max-width:60ch;margin:0}
+  .meta{margin-top:20px;font-family:var(--font-mono);font-size:.74rem;
+    color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px}
+
+  section{margin-top:48px}
+  h2{font-size:1.5rem;margin:0 0 6px;display:flex;align-items:baseline;gap:12px}
+  h2 .n{font-family:var(--font-mono);font-size:.9rem;color:var(--accent);font-weight:400}
+  .sub{color:var(--muted);margin:0 0 20px;font-size:.95rem}
+  p{margin:0 0 16px}
+  .read p, .read li{max-width:68ch}
+  ul{margin:0 0 16px;padding-left:1.1em}
+  li{margin-bottom:7px}
+  strong{font-weight:600}
+
+  /* Tesis destacada */
+  .thesis{background:var(--panel);border:1px solid var(--line);
+    border-left:4px solid var(--signal);border-radius:10px;padding:22px 24px;margin:24px 0}
+  .thesis p{margin:0;font-size:1.06rem}
+  .thesis .big{font-family:var(--font-display);font-size:1.15rem;font-weight:600;
+    display:block;margin-bottom:8px}
+
+  /* Resumen: tiles de hallazgo */
+  .findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:8px}
+  .f{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+  .f h3{font-size:.82rem;font-family:var(--font-mono);letter-spacing:.06em;
+    text-transform:uppercase;color:var(--accent);margin:0 0 8px}
+  .f p{margin:0;font-size:.95rem;color:var(--ink)}
+
+  /* Flujo zz_Workflow */
+  .flow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin:4px 0 20px}
+  .stage{flex:1 1 120px;min-width:0;background:var(--panel);border:1px solid var(--line);
+    border-top:3px solid var(--accent);border-radius:8px;padding:12px 13px}
+  .stage .k{font-family:var(--font-mono);font-size:.7rem;color:var(--accent);letter-spacing:.05em}
+  .stage .t{font-weight:600;font-size:.92rem;margin:4px 0 2px;font-family:var(--font-display)}
+  .stage .d{font-size:.82rem;color:var(--muted)}
+  .stage.out{border-top-color:var(--signal)}
+  .stage.out .k{color:var(--signal)}
+
+  /* Matriz de acople */
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:8px 0 10px}
+  table{border-collapse:collapse;width:100%;min-width:620px;font-size:.9rem}
+  th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:var(--panel);font-family:var(--font-display);font-size:.84rem;
+    position:sticky;top:0;border-bottom:2px solid var(--line-strong)}
+  tbody tr:last-child td{border-bottom:none}
+  td.meth{font-weight:600;font-family:var(--font-display);white-space:nowrap}
+  .grade{font-family:var(--font-mono);font-size:.72rem;font-weight:600;letter-spacing:.04em;
+    padding:3px 9px;border-radius:999px;display:inline-block;white-space:nowrap}
+  .g-high{background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent)}
+  .g-mid{background:transparent;color:var(--warn);border:1px solid var(--warn)}
+  .g-low{background:transparent;color:var(--bad);border:1px solid var(--bad)}
+  td .why{color:var(--muted);font-size:.86rem}
+
+  /* Cobertura de fases (barras de señal) */
+  .phases{display:grid;gap:8px;margin:8px 0 12px}
+  .ph{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:center;
+    background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+  .ph .name{font-family:var(--font-display);font-weight:600;font-size:.9rem}
+  .ph .name small{display:block;font-family:var(--font-mono);font-weight:400;
+    font-size:.68rem;color:var(--muted);letter-spacing:.04em}
+  .ph .bar{display:flex;align-items:center;gap:10px;min-width:0}
+  .meter{flex:0 0 96px;height:8px;border-radius:999px;background:var(--line);overflow:hidden}
+  .meter i{display:block;height:100%;border-radius:999px}
+  .m-full i{width:100%;background:var(--good)}
+  .m-part i{width:55%;background:var(--warn)}
+  .m-none i{width:12%;background:var(--bad)}
+  .ph .verdict{font-size:.86rem;color:var(--muted);min-width:0}
+  .ph .verdict b{color:var(--ink);font-weight:600}
+
+  .tag{display:inline-block;font-family:var(--font-mono);font-size:.7rem;
+    padding:2px 7px;border-radius:5px;border:1px solid var(--line-strong);color:var(--muted);margin-right:4px}
+
+  /* Caja de ambigüedad */
+  .caveat{background:var(--panel);border:1px dashed var(--line-strong);border-radius:10px;
+    padding:18px 20px;margin:16px 0}
+  .caveat h3{margin:0 0 10px;font-size:1rem;color:var(--signal);font-family:var(--font-display)}
+  .caveat ul{margin:0;padding-left:1.1em}
+
+  /* Fuentes */
+  .src{font-size:.86rem;color:var(--muted)}
+  .src li{margin-bottom:9px}
+  .src .date{font-family:var(--font-mono);font-size:.72rem;color:var(--accent);
+    border:1px solid var(--line);border-radius:4px;padding:1px 6px;margin-right:6px;white-space:nowrap}
+  footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--line);
+    font-size:.82rem;color:var(--muted)}
+  @media (max-width:520px){
+    .ph{grid-template-columns:1fr;gap:8px}
+    .meter{flex-basis:70px}
+  }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Modo 2 · Análisis · Metodologías de desarrollo</p>
+  <h1>Acople de zz_Workflow a las metodologías de validación</h1>
+  <p class="lede">Si el sistema arranca con un <em>“Verified Prototype + Evidence”</em>, ¿cómo cambia la estrategia aguas abajo y qué tan limpio encaja zz_Workflow en cada metodología?</p>
+  <div class="meta">
+    <span>Entrada: zz_Workflow.md (motor de prototipado SDR)</span>
+    <span>Base: estructura de 6 fases previa</span>
+    <span>2026-10-01</span>
+  </div>
+</header>
+
+<section class="read">
+  <h2><span class="n">00</span> Resumen</h2>
+  <div class="findings">
+    <div class="f"><h3>Qué produce</h3><p>zz_Workflow entrega un prototipo <strong>verificado contra criterios pre-declarados</strong> + un paquete de evidencia, con humano en cada puerta.</p></div>
+    <div class="f"><h3>Tesis central</h3><p>“Verificado” ≠ “validado”. La salida es evidencia <strong>interna</strong> (¿lo construimos bien?), no validación de campo RF (¿es lo correcto?).</p></div>
+    <div class="f"><h3>Mejor acople</h3><p><strong>CI+SIL</strong> (encaje alto) y <strong>V&amp;V/V-model</strong> (alto-medio): zz_Workflow ya es gated, trazable y con arnés de regresión.</p></div>
+    <div class="f"><h3>Mayor hueco</h3><p><strong>Banco HIL vivo</strong> y <strong>MCDA</strong>: zz_Workflow los <em>alimenta</em> pero no los ejecuta. Ahí sigue el trabajo aguas abajo.</p></div>
+  </div>
+</section>
+
+<section class="read">
+  <h2><span class="n">01</span> Qué define exactamente zz_Workflow</h2>
+  <p class="sub">Resumen del archivo adjunto (tratado como datos). Es la “primera fase” cuya salida alimenta todo lo demás.</p>
+  <p>zz_Workflow es un <strong>motor de prototipado asistido por LLM</strong> para un sensor SDR de <em>spectrum-sensing</em> de FM. Avanza por cuatro etapas acotadas por “paquetes de contexto” (Ctx&nbsp;00–03), cada una termina en una salida con nombre, y cierra en el output terminal <strong>Verified Prototype + Evidence</strong>.</p>
+
+  <div class="flow">
+    <div class="stage"><div class="k">Ctx 00</div><div class="t">Problem Baseline</div><div class="d">Propósito, objetivo de monitoreo, frontera, scope congelado, fuentes técnicas/regulatorias.</div></div>
+    <div class="stage"><div class="k">Ctx 01 · puerta</div><div class="t">Requisitos + criterios</div><div class="d">Restricciones, criterios de aceptación, plataforma de cómputo objetivo.</div></div>
+    <div class="stage"><div class="k">Ctx 02 · puerta</div><div class="t">Arquitectura</div><div class="d">Instanciación concreta del diseño.</div></div>
+    <div class="stage"><div class="k">Ctx 03</div><div class="t">Contrato + código</div><div class="d">Cadena de proceso: barrido HW, FFT/PSD, clasificación, fallbacks.</div></div>
+    <div class="stage out"><div class="k">Salida</div><div class="t">Verified Prototype + Evidence</div><div class="d">Run de verificación + reflexión crítica; defectos clasificados vuelven por R0–R3.</div></div>
+  </div>
+
+  <p><strong>Reglas de gobierno:</strong> el humano decide cada transición; el modelo redacta pero <em>nunca aprueba su propia salida</em>; la aceptación la deciden criterios pre-declarados sobre mediciones registradas, <em>nunca</em> el juicio del modelo. Los defectos se clasifican y se enrutan (R0–R3) a la etapa responsable; R0 reabre el scope como cambio controlado.</p>
+  <p><strong>Seis artefactos</strong> gobiernan el uso del modelo: (1) mapa de arquitectura de prompts/routing/fallback; (2) specs de RAG (indexa ITU y regulador nacional, estándares FM, capacidad/calibración del HackRF, piso de ruido base); (3) suite de eval/benchmarking (vectores golden de I/Q a SNR conocido; P<sub>d</sub>, P<sub>fa</sub>, exactitud bajo multipath y ruido de fase, latencia; checks de regresión); (4) guardrails (bajo cierto umbral de SNR reporta la banda como <code>Uncertain</code>, no <code>Free</code>); (5) telemetría/feedback (ediciones, reintentos, decisiones de puerta, clase de defecto); (6) privacidad/gobernanza (solo salen features no demodulados; el I/Q se queda local).</p>
+</section>
+
+<section class="read">
+  <h2><span class="n">02</span> La distinción que ordena todo: verificar ≠ validar</h2>
+  <div class="thesis">
+    <p><span class="big">“Verified Prototype” es verificación, no validación.</span>
+    La verificación es interna y contra especificación (“¿lo construimos bien?”); la validación es externa, en el entorno real del usuario (“¿construimos lo correcto?”). Un producto puede pasar toda la verificación y aun así fallar la validación de campo <a href="https://sheridantech.io/2026/03/17/design-validation-vs-verification/">(Sheridan, mar 2026)</a>.</p>
+  </div>
+  <p>El nombre que zz_Workflow le da a su salida es, por tanto, <strong>preciso y honesto</strong>: entrega un prototipo <em>verificado</em> contra el contrato Ctx&nbsp;03 y los criterios de Ctx&nbsp;01, con un paquete de evidencia. No afirma estar <em>validado</em> en el entorno RF operacional real. Esto fija el centro de gravedad de todo lo que viene después: el paquete de evidencia es <strong>evidencia de verificación</strong>, y las metodologías aguas abajo —sobre todo el banco HIL y la prueba de campo— son las que aportan la capa de validación que falta.</p>
+  <p>Esto también encaja con el principio que ya habíamos fijado en la <a href="https://claude.ai/artifact/XTn9RneQoSRLGzBSEDBc62">estructura general de 6 fases</a>: en cada puerta, un oráculo distinto del generador. zz_Workflow lo cumple de forma fuerte (humano + criterios deterministas; el modelo nunca se autoevalúa), lo cual es exactamente lo que recomienda la literatura 2026 sobre juicio automático (ver §05).</p>
+</section>
+
+<section class="read">
+  <h2><span class="n">03</span> Cómo cambia la estrategia aguas abajo</h2>
+  <p class="sub">Si la entrada inicial al sistema ya es un prototipo verificado + evidencia, cada metodología deja de “empezar de cero”.</p>
+  <ul>
+    <li><strong>V&amp;V / V-model.</strong> El lado izquierdo de la V (requisitos → arquitectura → diseño) es, en esencia, lo que zz_Workflow ya hizo dentro (Ctx&nbsp;00–03), y la evidencia aporta los artefactos de trazabilidad que el V-model exige <a href="https://qmsdoc.com/2026/01/12/what-is-traceability-in-the-v-model/">(QMSdoc, ene 2026)</a>. Entras por el <strong>lado derecho</strong>: integración, verificación de sistema y validación. El trabajo cambia de “derivar requisitos” a “auditar que las puertas internas de zz_Workflow cumplen el rigor del V-model” (en particular, independencia del verificador).</li>
+    <li><strong>CI + SIL.</strong> El artefacto&nbsp;3 de zz_Workflow <em>ya es</em> un arnés de regresión (golden datasets + checks tras cada cambio de modelo/prompt/Ctx). Con el prototipo como entrada, lo pones en una tubería de CI y la evidencia siembra la línea base. Mínima fricción: es el acople más natural. Lo que falta no es el concepto, sino la <strong>orquestación</strong> (automatización, política de ramas, etapas SIL→HIL dentro del pipeline).</li>
+    <li><strong>Bancos HIL (MIL→SIL→PIL→HIL).</strong> La escalera va del modelo al hardware real; HIL añade un <em>lazo cerrado con hardware físico</em> que el software solo no tiene <a href="https://www.analogictips.com/how-do-mil-sil-pil-and-hil-simulation-and-testing-relate-to-mbse-faq/">(definición clásica, 2022)</a>. La verificación de zz_Workflow parece quedarse en MIL/SIL (I/Q sintético o de fuente controlada) y quizá PIL (plataforma de cómputo objetivo). Por eso, aguas abajo el <strong>trabajo de HIL es precisamente cerrar la brecha restante</strong>: llevar el prototipo a un banco real (p. ej. USRP/HackRF captando espectro vivo, generador inyectando señales conocidas, fuente de ruido calibrada) y comparar P<sub>d</sub>/P<sub>fa</sub> medidos contra las curvas esperadas de la evidencia.</li>
+    <li><strong>Agentes LLM-as-judge + HITL.</strong> zz_Workflow adopta con fuerza la mitad HITL y <em>omite a propósito</em> el juez-LLM para la decisión de aceptación. Aguas abajo, si quisieras añadir un juez-LLM (p. ej. para triar grandes salidas de regresión), la telemetría/evidencia te da datos de calibración, pero debe mantenerse <strong>fuera</strong> de la decisión de aceptación (ver §05).</li>
+    <li><strong>MCDA.</strong> zz_Workflow trabaja <em>un</em> prototipo; no compara alternativas. Si la entrada son <em>varios</em> prototipos verificados (p. ej. distintos algoritmos de detección o front-ends SDR), MCDA se vuelve la capa de selección aguas abajo, y el paquete de evidencia de cada uno aporta los <strong>valores de criterio</strong> medidos que MCDA necesita. Cautela: los rankings MCDA pueden ser frágiles —cambios del 4&nbsp;% en un indicador mueven el primer puesto— así que exige análisis de sensibilidad <a href="https://www.sciencedirect.com/science/article/pii/S266618882600016X">(Sustainable Futures, jun 2026)</a>.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="n">04</span> Veredicto de acople</h2>
+  <p class="sub">Matriz zz_Workflow × metodología: grado de encaje y justificación.</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Metodología</th><th>Encaje</th><th>Dónde encaja limpio / dónde hay fricción</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="meth">CI + SIL</td>
+        <td><span class="grade g-high">ALTO · limpio</span></td>
+        <td>El artefacto 3 es un arnés de regresión de facto. <span class="why">Fricción: zz_Workflow describe la suite pero no la orquestación de CI (automatización, ramas, etapas HIL en el pipeline).</span></td>
+      </tr>
+      <tr>
+        <td class="meth">V&amp;V / V-model</td>
+        <td><span class="grade g-high">ALTO-MEDIO</span></td>
+        <td>Gated, trazable y guiado por requisitos; la evidencia da trazabilidad. <span class="why">Fricción: hay que descomponer la “verification run” única en los niveles de la V y auditar la independencia del verificador.</span></td>
+      </tr>
+      <tr>
+        <td class="meth">LLM-as-judge + HITL</td>
+        <td><span class="grade g-mid">MEDIO · parcial por diseño</span></td>
+        <td>Adopta HITL con fuerza. <span class="why">Omite el juez-LLM para aceptación y lo sustituye por criterios deterministas + humano: es una virtud frente a la brecha de verificación, no un defecto.</span></td>
+      </tr>
+      <tr>
+        <td class="meth">Bancos HIL</td>
+        <td><span class="grade g-mid">MEDIO-BAJO · alimenta, no ejecuta</span></td>
+        <td>Buen proveedor de referencia (curvas esperadas P<sub>d</sub>/P<sub>fa</sub>). <span class="why">Hueco: se queda en MIL/SIL/PIL; el HIL vivo (RF real, lazo cerrado) no está, o no queda claro (ver §06).</span></td>
+      </tr>
+      <tr>
+        <td class="meth">MCDA</td>
+        <td><span class="grade g-low">BAJO interno · buen feeder</span></td>
+        <td>La evidencia produce valores de criterio medibles. <span class="why">Hueco: no hay paso de selección entre alternativas; zz_Workflow entrega un solo diseño.</span></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">05</span> Por qué omitir el juez-LLM es un acierto</h2>
+  <div class="read">
+  <p>La decisión de zz_Workflow —“la aceptación nunca la decide el juicio del modelo”— coincide con el hallazgo más claro de 2026 sobre evaluación automática. El trabajo <em>LLM-as-a-Judge Is Not an Oracle</em> muestra que “un optimizador converge a la frontera de decisión de lo que sea que lo califica, no a la frontera de la tarea”: cuando un mismo componente propone y evalúa, la presión de optimización explota las debilidades del evaluador en vez de mejorar el desempeño real <a href="https://arxiv.org/abs/2609.02246">(arXiv:2609.02246, sep 2026)</a>.</p>
+  <p>Su receta —separación de roles (ningún componente propone y aplica a la vez) y <strong>puertas deterministas donde el rechazo mecánico vence a la aprobación del LLM, nunca al revés</strong>— es exactamente lo que implementa zz_Workflow con el humano en cada puerta y criterios pre-declarados. En términos del dominio SDR: la aceptación del sensor se decide por P<sub>d</sub>/P<sub>fa</sub> medidos contra umbrales fijados en Ctx&nbsp;01, no porque el modelo “crea” que detectó bien.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">06</span> Cobertura de la estructura de 6 fases</h2>
+  <p class="sub">Qué puertas de la <a href="https://claude.ai/artifact/XTn9RneQoSRLGzBSEDBc62">estructura general previa</a> cubre zz_Workflow y cuáles deja fuera.</p>
+  <div class="phases">
+    <div class="ph"><div class="name">1 · Encuadre<small>G0 · framing</small></div><div class="bar"><span class="meter m-full"><i></i></span><span class="verdict"><b>Cubierta.</b> Ctx 00 congela scope, define frontera y fuentes autoritativas.</span></div></div>
+    <div class="ph"><div class="name">2 · Modelo<small>MIL / referencia</small></div><div class="bar"><span class="meter m-part"><i></i></span><span class="verdict"><b>Parcial.</b> Hay arquitectura (Ctx 02) y golden I/Q a SNR conocido, pero no un modelo físico predictivo explícito como oráculo independiente.</span></div></div>
+    <div class="ph"><div class="name">3 · Software / CI<small>G1</small></div><div class="bar"><span class="meter m-full"><i></i></span><span class="verdict"><b>Cubierta.</b> Contrato Ctx 03 + suite de eval y regresión (artefacto 3).</span></div></div>
+    <div class="ph"><div class="name">4 · Banco HIL<small>G2</small></div><div class="bar"><span class="meter m-none"><i></i></span><span class="verdict"><b>Hueco.</b> La verification run parece SIL/replay; el lazo cerrado con RF real no está confirmado.</span></div></div>
+    <div class="ph"><div class="name">5 · Juicio<small>G3 · oráculo externo</small></div><div class="bar"><span class="meter m-full"><i></i></span><span class="verdict"><b>Cubierta en principio.</b> Humano + criterios deterministas + reflexión crítica; el modelo nunca se autoevalúa.</span></div></div>
+    <div class="ph"><div class="name">6 · Decisión MCDA<small>G4</small></div><div class="bar"><span class="meter m-none"><i></i></span><span class="verdict"><b>Fuera de alcance.</b> Un solo prototipo; sin selección entre alternativas.</span></div></div>
+  </div>
+  <p class="read" style="margin-top:14px">Lectura global: zz_Workflow cubre con solidez de la fase 1 a la 3 y la 5, toca parcialmente la 2, y <strong>deja abiertas la 4 (HIL vivo) y la 6 (MCDA)</strong>. Es decir, es un excelente <em>productor</em> de la entrada “verified prototype + evidence”, pero la validación de hardware y la decisión comparativa siguen siendo trabajo aguas abajo.</p>
+</section>
+
+<section>
+  <h2><span class="n">07</span> Ambigüedades y huecos (sin rellenar)</h2>
+  <div class="caveat">
+    <h3>Lo que el archivo no deja claro</h3>
+    <ul class="read">
+      <li><strong>¿La “verification run” es HIL en vivo o replay?</strong> zz_Workflow menciona “barrido por hardware” y “plataforma de cómputo objetivo”, pero sus vectores golden son I/Q <em>sintético o de fuente controlada</em>. No queda claro si captura RF real sobre el aire en lazo cerrado (HIL) o reproduce I/Q grabado (SIL/PIL). Esto decide si el acople con bancos HIL es MEDIO o más bajo. <em>Lo señalo en vez de asumirlo.</em></li>
+      <li><strong>Qué significa “Modelo” como oráculo.</strong> La estructura de 6 fases ponía un modelo de referencia independiente del generador; zz_Workflow usa RAG + contrato, no necesariamente un modelo predictivo (p. ej. presupuesto de enlace o canal) contra el cual contrastar.</li>
+    </ul>
+  </div>
+  <div class="caveat">
+    <h3>Límite de fuentes</h3>
+    <p class="read" style="margin:0">Para HIL de <em>spectrum-sensing</em> FM con P<sub>d</sub>/P<sub>fa</sub> no encontré en esta búsqueda una fuente primaria <strong>nueva de 2026</strong> específica; la literatura fuerte de bancos USRP/GNU Radio para sensing es anterior (2011–2022) y sigue siendo la base del dominio. El término “verified prototype” tampoco aparece como estándar publicado con nombre propio; lo trato como descripción, no como norma. Igual que en el análisis previo, <strong>la estructura de 6 fases es síntesis propia, no una norma publicada.</strong></p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">08</span> Fuentes</h2>
+  <ul class="src">
+    <li><span class="date">mar 2026</span> Sheridan Tech — <a href="https://sheridantech.io/2026/03/17/design-validation-vs-verification/">Design Validation vs Verification</a>. Verificación (interna, vs especificación) vs validación (externa, entorno real); un producto puede verificar y fallar la validación. <em>Fecha verificada.</em></li>
+    <li><span class="date">sep 2026</span> arXiv:2609.02246 — <a href="https://arxiv.org/abs/2609.02246">LLM-as-a-Judge Is Not an Oracle: Why Self-Improving Agents Need Deterministic Guardrails</a>. El juez no debe ser el decisor final; puertas deterministas y separación de roles. <em>Fecha verificada (v1, 2 sep 2026).</em></li>
+    <li><span class="date">ene 2026</span> QMSdoc — <a href="https://qmsdoc.com/2026/01/12/what-is-traceability-in-the-v-model/">What is Traceability in the V-Model?</a>. Trazabilidad requisito↔verificación en el V-model. <em>Fecha por URL/publicación.</em></li>
+    <li><span class="date">jun 2026</span> Sustainable Futures — <a href="https://www.sciencedirect.com/science/article/pii/S266618882600016X">MCDA for sustainability assessment — How reliable are the results?</a>. Los rankings pueden ser frágiles (cambios del 4&nbsp;% mueven el primer puesto); exige análisis de sensibilidad. <em>Fecha verificada.</em></li>
+    <li><span class="date">2022</span> AnalogicTips — <a href="https://www.analogictips.com/how-do-mil-sil-pil-and-hil-simulation-and-testing-relate-to-mbse-faq/">MIL, SIL, PIL y HIL vs MBSE</a>. Definición de la escalera modelo→hardware; HIL = lazo cerrado con hardware real. <em>Fundacional; fecha anterior a 2026, marcada como contexto.</em></li>
+    <li><span class="date">previo</span> Artefactos del proyecto reutilizados: <a href="https://claude.ai/artifact/XTn9RneQoSRLGzBSEDBc62">estructura general de 6 fases</a> y <a href="https://claude.ai/artifact/4fe5BVof7W9zgmu29BGMYS">validar hipótesis con IA</a> (con sus fuentes 2025–2026 ya verificadas: brecha de verificación, HIL OPAL-RT, R-Mode SDR, etc.).</li>
+  </ul>
+</section>
+
+<footer>
+  Modo 2 (explicador). Entrada: zz_Workflow.md tratado como datos. Las afirmaciones sobre metodologías se apoyan en fuentes con fecha; donde no hubo fuente reciente sólida o el archivo era ambiguo, se dice en §07 en vez de rellenar.
+</footer>
+</div>
+
+</body></html>
