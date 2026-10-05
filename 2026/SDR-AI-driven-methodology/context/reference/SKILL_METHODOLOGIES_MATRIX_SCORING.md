@@ -191,7 +191,8 @@ descalifica = ( min(D1, D2, D3, D4) < 2.0 ) # puerta de piso Tier 1
 - Normalizar a 0–100 mantiene comparabilidad aunque se use otro subconjunto de
   dimensiones (recalcula el máximo si cambias el set).
 - **No lideres con el composite.** Acompáñalo siempre de:
-  - **Perfil radar / por dimensión** de cada metodología (hace visibles las brechas).
+  - **El perfil por dimensión**, que ya es visible en las columnas D1–D5 de la
+    matriz única (§7); léelo por columna para exponer las brechas.
   - **Puerta de piso Tier 1:** si *cualquier* dimensión Tier 1 (D1–D4) < **2.0**,
     la metodología queda **DESCALIFICADA** sin importar el total. (Una
     metodología fuerte en todo pero con trazabilidad nula, D3≈1, está
@@ -203,39 +204,48 @@ Si extiendes el set, recalcula el máximo: `Σ(peso_dim × 5)`.
 
 ## 7. Formato de salida
 
-Produce la evaluación en una estructura consolidada, directa y de alta legibilidad:
+Una **única matriz** (filas = metodologías, columnas = dimensiones + agregados),
+seguida de notas. No generes tablas por metodología, ni de ranking o perfil
+aparte: toda la comparación vive en esa matriz.
 
-### 7.1 Matriz consolidada de scoring (única matriz)
+### 7.1 Matriz consolidada de scoring
 
-Una **única tabla principal** con todas las metodologías evaluadas en las filas y las dimensiones evaluadas en las columnas:
+Una fila por metodología, ordenada por **Normalizado** descendente (las
+descalificadas al final):
 
-| Categoría / Tipo | ID | Metodología | D1 (×3) | D2 (×3) | D3 (×3) | D4 (×3) | D5 (×2) | Composite (/70) | Normalizado (/100) | Estado (Puerta Tier 1) |
-|:---:|:---:|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| IA-assisted | M1 | [Nombre Metodología 1] | 1.5 | 2.0 | 3.0 🚩 | 3.0 🚩 | 1.5 | 31.5 | 45.0 | ❌ Descalificada (D1 < 2.0) |
-| SDR-sensor | M2 | [Nombre Metodología 2] | 4.0 | 1.5 | 3.0 | 2.0 | 2.0 | 35.5 | 50.7 | ❌ Descalificada (D2 < 2.0) |
-| Híbrida | M3 | [Nombre Metodología 3] | 3.5 | 3.0 | 3.0 | 3.0 | 2.0 | 39.5 | 56.4 | ✅ Calificada |
+| Metodología | Cat | D1 (×3) | D2 (×3) | D3 (×3) | D4 (×3) | D5 (×2) | Composite (/70) | Norm (/100) | Estado |
+|-------------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| [Metodología 1] | AI | 1.5 | 2.0 | 3.0 🚩 | 3.0 🚩 | 1.5 | 31.5 | 45.0 | ❌ D1 < 2.0 |
+| [Metodología 2] | SDR | 4.0 | 1.5 | 3.0 | 2.0 | 2.0 | 35.5 | 50.7 | ❌ D2 < 2.0 |
+| [Metodología 3] | INT | 3.5 | 3.0 | 3.0 | 3.0 | 2.0 | 39.5 | 56.4 | ✅ |
 
-- **Valores en celdas (D1–D5):** Score final combinado según la regla de §5.
-- **Banderas (🚩):** Marca con 🚩 cualquier dimensión con desbalance severo de doble ancla (`|SDR − AI| ≥ 2`).
-- **Estado:** Indica **✅ Calificada** o **❌ Descalificada (Dim < 2.0)** aplicando la puerta de piso Tier 1 (§6: si `min(D1..D4) < 2.0`).
+- **Celdas D1–D5:** score final ya combinado según §5; añade 🚩 si hubo desbalance
+  de doble ancla (`|SDR − AI| ≥ 2`).
+- **Cat** (una etiqueta, según qué faceta del scope cubre nativamente la
+  metodología): **AI** = solo AI-assisted · **SDR** = solo sensor/herramienta ·
+  **INT** = intersección (ambos) · **GOV** = overlay de gobernanza (se puntúa
+  igual, pero su descalificación es informativa). La categoría anticipa el fallo:
+  por "la ausencia es señal" (§2), AI cae por facetas SDR bajas y SDR por facetas
+  AI bajas; solo INT puede pasar la puerta.
+- **Estado:** `✅` o `❌ Dk<2.0` nombrando la(s) dimensión(es) Tier 1 que dispararon
+  la puerta de piso (§6).
+- Si extiendes a D6–D13 (§8), añade columnas y recalcula Composite/Norm.
 
-### 7.2 Hallazgos estructurales y síntesis
+### 7.2 Hallazgos (2–4 líneas)
 
-Presenta un análisis conciso derivado de la matriz:
-1. **Mecanismo de descalificación:** Cuántas y cuáles metodologías caen por la puerta Tier 1 y los patrones de fallo observados (p. ej., desbalance por falta de modelado SDR o ausencia de lazo agéntico AI).
-2. **Brechas de doble ancla:** Dimensiones con banderas 🚩 recurrentes y techos o huecos sistémicos comunes.
-3. **Implicación composicional:** Identificar qué metodologías aportan las facetas más sólidas por dimensión para construir una metodología compuesta viable.
+Debajo de la matriz, no antes: qué categoría pasa la puerta, cuál es el hueco
+sistémico (columna con techo bajo en toda la matriz) y las brechas 🚩 dominantes.
+No lideres con el composite.
 
-### 7.3 Desglose de evidencia y facetas (Notas compactas)
+### 7.3 Desglose de evidencia y facetas (notas compactas)
 
-En lugar de matrices adicionales por metodología, documenta los puntajes individuales (SDR / AI), la regla aplicada y la justificación en una lista concisa:
+Una entrada por metodología; por cada dimensión, una línea con las facetas y el
+artefacto citado (aquí —y solo aquí— se muestran SDR/AI; la matriz da el final):
 
-- **[ID] Nombre de la metodología:**
-  - **D1:** SDR = X.X, AI = Y.Y (`min`) → **Final**. *Evidencia:* [artefacto citado o justificación del score bajo].
-  - **D2:** SDR = X.X, AI = Y.Y (`min`) → **Final**. *Evidencia:* ...
-  - **D3:** SDR = X.X, AI = Y.Y (`prom ΔZ.Z 🚩`) → **Final**. *Evidencia:* ...
-  - **D4:** SDR = X.X, AI = Y.Y (`prom`) → **Final**. *Evidencia:* ...
-  - **D5:** SDR = X.X, AI = Y.Y (`prom`) → **Final**. *Evidencia:* ...
+- **[Metodología]:**
+  - **D1:** SDR X.X / AI Y.Y (`min`) → **Final**. *Evidencia:* [artefacto o motivo del score bajo].
+  - **D2:** … `min` …
+  - **D3–D5:** … `prom` (con `ΔZ.Z 🚩` si aplica) …
 
 ---
 
@@ -275,13 +285,16 @@ convierte en opinión disfrazada de números.
 
 1. Confirma el set de dimensiones (default D1–D5) y la disponibilidad de las
    metodologías en la entrada; si faltan, pídelas.
-2. Para cada metodología y cada dimensión: identifica la faceta **SDR** y la
+2. **Etiqueta cada metodología** con su categoría de cobertura (columna **Cat**
+   de §7.1: AI / SDR / INT / GOV); anticipa su patrón de fallo.
+3. Para cada metodología y cada dimensión: identifica la faceta **SDR** y la
    faceta **AI**, ancla cada una en la rúbrica §4 y **cita la evidencia**.
-3. Aplica la regla de combinación de §5 → score final por dimensión; marca 🚩 los
+4. Aplica la regla de combinación de §5 → score final por dimensión; marca 🚩 los
    desbalances.
-4. Calcula composite, normalizado y la puerta de piso Tier 1 (§6).
-5. Emite la salida en el formato consolidado de §7 (matriz única + hallazgos + desglose de evidencia).
-6. **No lideres con el número:** resalta brechas y descalificaciones antes que el
+5. Calcula composite, normalizado y la puerta de piso Tier 1 (§6).
+6. Emite la salida en el formato consolidado de §7 (matriz única + hallazgos +
+   desglose de evidencia).
+7. **No lideres con el número:** resalta brechas y descalificaciones antes que el
    total.
 
 ---
